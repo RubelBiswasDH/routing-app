@@ -2,6 +2,7 @@ import React from 'react'
 import DeckGL from '@deck.gl/react'
 import { LineLayer } from '@deck.gl/layers'
 import { Map } from 'react-map-gl'
+import { MAP_API } from '../App..config'
 import 'mapbox-gl/dist/mapbox-gl.css'
 
 const data = [
@@ -9,8 +10,6 @@ const data = [
         sourcePosition: [-122.41669, 37.7853], targetPosition: [-122.41669, 37.781]
     }
 ]
-
-const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoicnViZWxiaXN3YXMiLCJhIjoiY2wxNjBqbG1yMHVoODNkcWExZmc0Y2JvaiJ9.qshAlfWDxCblvr_MJkLg-Q'
 
 class DeckGLMap extends React.PureComponent {
 
@@ -46,8 +45,8 @@ class DeckGLMap extends React.PureComponent {
                     layers={layers} 
                 >
                     <Map 
-                        mapboxAccessToken={MAPBOX_ACCESS_TOKEN} 
-                        mapStyle = { "mapbox://styles/mapbox/streets-v11" }
+                        mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
+                        mapStyle = { MAP_API.STYLES[0].uri }
                     />
                 </DeckGL>
             </div>
