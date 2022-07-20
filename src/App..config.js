@@ -10,7 +10,7 @@ const MAP_API = {
         },
         {
             title: 'Light',
-            uri:'https://map.barikoi.com/styles/osm-liberty/style.json'
+            uri:'https://map.barikoi.com/styles/osm-liberty/style.json?key=Mjg5MTpGMDNaTU1HTjZU'
         },
         {
             title: 'Dark',
