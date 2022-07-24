@@ -7,6 +7,8 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import AutoComplete from './common/AutoComplete'
 import { Box, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import mapboxgl from 'mapbox-gl'
+mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
 
 const ICON_MAPPING = {
   marker: {x: 0, y: 0, width: 128, height: 128, mask: true}
