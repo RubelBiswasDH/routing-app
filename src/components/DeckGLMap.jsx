@@ -1,7 +1,7 @@
 import React from 'react'
 import DeckGL from '@deck.gl/react'
 import { IconLayer } from '@deck.gl/layers'
-import Map, {useControl} from 'react-map-gl';
+import Map, {useControl, Marker} from 'react-map-gl';
 import { MAP_API } from '../App..config'
 import AutoComplete from './common/AutoComplete'
 import { Box, Typography } from '@mui/material'
@@ -26,6 +26,8 @@ function DrawControl(props) {
   useControl((map) => {
     // console.log(map.map)
     map.map.on('draw.create', props.onCreate)
+    map.map.on('draw.update', props.onUpdate)
+    map.map.on('draw.delete', props.onDelete)
     return new MapboxDraw(props)}, {
     position: props.position
   });
@@ -44,17 +46,47 @@ class DeckGLMap extends React.PureComponent {
             bearing: 0
         },
         layers: null,
-        addressList: [],
+        addressList: [{
+            "id": 627929,
+            "Address": "Restaurant, House 1/20, Road 7, Tali Office, Shikder Real State",
+            "area": "Hazaribagh",
+            "subType": "Restaurant",
+            "pType": "Food",
+            "longitude": 90.36298132447399,
+            "latitude": 23.740338383279166,
+            "uCode": "ZNCD1308",
+            "user_id": 1649,
+            "created_at": "2020-08-15 18:21:35",
+            "updated_at": "2020-08-15 18:21:35",
+            "ST_ASTEXT(location)": "POINT(90.36298132447399 23.740338383279166)",
+            "image": null
+        },
+        {
+            "id": 627934,
+            "Address": "General Store, Golden Villa, House 1/17/B, Road 6, Tali Office, Shikder Real State",
+            "area": "Hazaribagh",
+            "subType": "General Store",
+            "pType": "Shop",
+            "longitude": 90.36258431127867,
+            "latitude": 23.74039088138589,
+            "uCode": "MMYO5153",
+            "user_id": 1649,
+            "created_at": "2020-08-15 18:25:07",
+            "updated_at": "2020-08-15 18:28:03",
+            "ST_ASTEXT(location)": "POINT(90.36258431127867 23.74039088138589)",
+            "image": null
+        }],
         selectedAddress: {},
     }
 
     componentDidMount(){
         this._createLayer()
-        this._handleGetData()
+        // this._handleGetData()
     }
 
     componentDidUpdate(prevProps, prevState){
         const { selectedAddress, addressList, initial_view_state } = this.state
+        // console.log({addressList})
         if (prevState.selectedAddress !== selectedAddress || prevState.addressList !== addressList){
             this._createLayer()
             this.setState(preState => ({
@@ -125,6 +157,7 @@ class DeckGLMap extends React.PureComponent {
     }
 
     _handleAutoCompInputChange = e => {
+        console.log(this._handleAddressList)
         const inputAddress = e?.target?.value
         if(inputAddress && inputAddress.length){
             this._handleAddressList(inputAddress)
@@ -161,18 +194,58 @@ class DeckGLMap extends React.PureComponent {
             })
         }
     }
-    _handleOnCreate({features}){
-        console.log('handle on create !',features)
+
+    _handleUpdateAddress = (addressList) => {
+        this.setState({addressList:addressList})
     }
 
-    _handleGetData(){
-        const url = "https://api.bmapsbd.com/get/custom/polygon?area=90.362471%2023.740238,90.362471%2023.740432,90.363101%2023.740432,90.363101%2023.740238,90.362471%2023.740238"
+    _handleOnCreate = ({features}) => {
+        const { _handleUpdateAddress } = this
+     
+        const coordinates = features[0]?.geometry?.coordinates[0]
+        let areaQueryStr = ''
+        let count = 0
+        for(let i of coordinates){
+            count+=1
+            areaQueryStr+= `${i[0]}%20${i[1]}`
+            if(count !== coordinates.length){
+                areaQueryStr+=','
+            }
+        }
+        // features[0]?.geometry?.coordinates[0]
+        const url = `https://api.bmapsbd.com/get/custom/polygon?area=${areaQueryStr}`
+        fetch(url)
+        .then( res => res.json())
+        .then( res => res.places )
+        .then( res =>  {
+            // console.log(res)
+            // console.log({_handleUpdateAddress})
+            if(_handleUpdateAddress){
+                _handleUpdateAddress(res)
+            }
+        })
+        // console.log(areaQueryStr)
+        // this._handleGetData(areaQueryStr)
+        
+    }
+    _handleOnRemove = () => {
+        console.log("on remve")
+        this.setState({addressList:[]})
+     
+    }
+    _handleGetData(areaQueryStr){
+        console.log(areaQueryStr)
+
+        // const url = "https://api.bmapsbd.com/get/custom/polygon?area=90.362471%2023.740238,90.362471%2023.740432,90.363101%2023.740432,90.363101%2023.740238,90.362471%2023.740238"
+        const url = `https://api.bmapsbd.com/get/custom/polygon?area=${areaQueryStr}`
         fetch(url)
         .then( res => res.json())
         .then( res => {
             this.setState({addressList:res?.places})
         })
     }
+
+
     // {
     //     "Address": "M&M, España",
     //     "city": "Felanich",
@@ -187,7 +260,7 @@ class DeckGLMap extends React.PureComponent {
     // }
     render() {
         const { initial_view_state, layers, thana, addressList, selectedAddress } = this.state
-        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate } = this
+        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate, _handleOnRemove } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%'}}>
@@ -247,6 +320,8 @@ class DeckGLMap extends React.PureComponent {
                     >
                         <DrawControl
                             onCreate = { _handleOnCreate }
+                            onDelete = { _handleOnRemove }
+                            onUpdate = { _handleOnCreate }
                             position="top-left"
                             displayControlsDefault={false}
                             controls={{
@@ -254,6 +329,29 @@ class DeckGLMap extends React.PureComponent {
                             trash: true
                             }}
                         />
+                        
+                        {  addressList?.map( d => 
+                            
+                            <Marker 
+                                   
+                                    longitude={ d["longitude"] } 
+                                    latitude={ d["latitude"] } 
+                                    anchor="bottom" 
+                                    scale={1}
+                                >
+                                <img src={markerIcon} style={{height:'40px', width:'40px'}}/>
+                            </Marker>
+                                
+                        
+                        ) }
+                        {/* <Marker 
+                            longitude={ 90.36298132447399} 
+                            latitude={23.740338383279166} 
+                            anchor="bottom" 
+                            scale={1}
+                        >
+                            <img src={markerIcon} style={{height:'40px', width:'40px'}}/>
+                        </Marker> */}
                     </Map>
 
                 </div>
