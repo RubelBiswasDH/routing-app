@@ -4,10 +4,9 @@ import { Box, Grid, Typography, TextField, Autocomplete } from '@mui/material'
 
 
 class AutoComplete extends React.PureComponent{
-    state={}
 
     render(){ 
-        const { _handleAutoCompInputChange, _handleAutoCompChange, filterOptions, disableUnderline, variant, title, titleStyle, value, fieldStyle, sx } = this.props
+        const { _handleAutoCompInputChange, _handleAutoCompChange, filterOptions, disableUnderline, variant, title, fieldStyle, sx } = this.props
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
                 <Autocomplete

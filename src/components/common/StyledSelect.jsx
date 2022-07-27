@@ -8,10 +8,9 @@ import Select from '@mui/material/Select';
 
 
 class StyledSelect extends React.PureComponent{
-    state={}
 
     render(){ 
-        const { _handleInputChange, selectOptions, variant, title, titleStyle, value, fieldStyle, sx } = this.props
+        const { _handleInputChange, selectOptions, title, value, sx } = this.props
         
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
@@ -24,15 +23,13 @@ class StyledSelect extends React.PureComponent{
                         label="Age"
                         onChange={_handleInputChange}
                     >
-                        {/* <MenuItem value="">
-                            <em>None</em>
-                        </MenuItem> */}
                         { selectOptions.map( m => (
                             <MenuItem key={m} value={m}>{m}</MenuItem>
                         ))}
                     </Select>
                 </FormControl>
-        </Box>)
+            </Box>
+        )
     }
 }
 
