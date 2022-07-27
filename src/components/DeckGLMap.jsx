@@ -3,13 +3,15 @@ import DeckGL from '@deck.gl/react'
 import { IconLayer } from '@deck.gl/layers'
 import Map, {useControl} from 'react-map-gl';
 import { MAP_API } from '../App..config'
-import 'mapbox-gl/dist/mapbox-gl.css'
 import AutoComplete from './common/AutoComplete'
 import { Box, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
+import 'mapbox-gl/dist/mapbox-gl.css'
+
+import markerIcon from '../assets/marker--v1'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
 
@@ -21,7 +23,10 @@ const ICON_MAPPING = {
 };
 
 function DrawControl(props) {
-  useControl(() => new MapboxDraw(props), {
+  useControl((map) => {
+    // console.log(map.map)
+    map.map.on('draw.create', props.onCreate)
+    return new MapboxDraw(props)}, {
     position: props.position
   });
 
@@ -40,17 +45,23 @@ class DeckGLMap extends React.PureComponent {
         },
         layers: null,
         addressList: [],
-        selectedAddress: {}
+        selectedAddress: {},
     }
 
     componentDidMount(){
         this._createLayer()
+        this._handleGetData()
     }
 
     componentDidUpdate(prevProps, prevState){
-        const { selectedAddress } = this.state
-        if (prevState.selectedAddress !== selectedAddress){
+        const { selectedAddress, addressList, initial_view_state } = this.state
+        if (prevState.selectedAddress !== selectedAddress || prevState.addressList !== addressList){
             this._createLayer()
+            this.setState(preState => ({
+                ...preState.initial_view_state,
+                longitude:selectedAddress.longitude,
+                latitude:selectedAddress.latitude
+            }))
         }
     }
 
@@ -73,7 +84,7 @@ class DeckGLMap extends React.PureComponent {
     }
 
     _createLayer(){
-        const { selectedAddress } = this.state
+        const { selectedAddress, addressList } = this.state
         const layers = [
             // new LineLayer({id: 'line-layer', data}),
             new IconLayer({
@@ -91,21 +102,23 @@ class DeckGLMap extends React.PureComponent {
                 getSize: d => 5,
                 getColor: d => [Math.sqrt(d.exits), 140, 0]
               }),
-            // new ScatterplotLayer({
-            //     id: 'scatterplot-layer',
-            //     data: filterCctvData,
+            //   new IconLayer({
+            //     id: 'icon-layer',
+            //     data: [ addressList ],
+            //     // iconAtlas and iconMapping should not be provided
+            //     // getIcon return an object which contains url to fetch icon of each data point
+            //     getIcon: d => ({
+            //         url: markerIcon,
+            //         width: 128,
+            //         height: 140,
+            //         anchorY: 128
+            //       }),
+            //     // icon size is based on data point's contributions, between 2 - 25
+            //     getSize:d => 4,
             //     pickable: true,
-            //     opacity: 0.8,
-            //     stroked: true,
-            //     filled: true,
-            //     radiusScale: 4,
-            //     radiusMinPixels: 1,
-            //     radiusMaxPixels: 100,
-            //     lineWidthMinPixels: 1,
-            //     getPosition: d => ([ d.longitude, d.latitude]),
-            //     getRadius: d => Math.sqrt(d.exits),
-            //     getFillColor: d => this._getPointColor(d?.thana),
-            //     getLineColor: d => [0, 0, 0]
+            //     sizeScale: 15,
+            //     getPosition: d => ([ +d?.longitude, +d?.latitude])
+
             // })
         ]
         this.setState({layers})
@@ -144,13 +157,21 @@ class DeckGLMap extends React.PureComponent {
             .then( res => res.json())
             .then( res => {
                 const addressList =  res.places
-                // console.log({address:addressList[0]})
                 this.setState({ addressList: addressList })
             })
         }
     }
-    _handleOnCreate(){
-        console.log('handle on create !')
+    _handleOnCreate({features}){
+        console.log('handle on create !',features)
+    }
+
+    _handleGetData(){
+        const url = "https://api.bmapsbd.com/get/custom/polygon?area=90.362471%2023.740238,90.362471%2023.740432,90.363101%2023.740432,90.363101%2023.740238,90.362471%2023.740238"
+        fetch(url)
+        .then( res => res.json())
+        .then( res => {
+            this.setState({addressList:res?.places})
+        })
     }
     // {
     //     "Address": "M&M, España",
