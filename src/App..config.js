@@ -22,5 +22,8 @@ const MAP_API = {
         }
     ]
 }
-
-export { MAP_API }
+const baseUrl = 'https://api.bmapsbd.com'
+const API = {
+    GET_DATA:`${baseUrl}/get/custom/polygon`
+}
+export { MAP_API, API }

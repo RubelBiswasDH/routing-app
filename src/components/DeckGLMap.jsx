@@ -2,15 +2,15 @@ import React from 'react'
 import DeckGL from '@deck.gl/react'
 import { IconLayer } from '@deck.gl/layers'
 import Map, {useControl, Marker} from 'react-map-gl';
-import { MAP_API } from '../App..config'
+import { MAP_API, API } from '../App..config'
 import AutoComplete from './common/AutoComplete'
+import StyledSelect from './common/StyledSelect'
 import { Box, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import mapboxgl from 'mapbox-gl';
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
-
 import markerIcon from '../assets/marker--v1'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
@@ -77,6 +77,8 @@ class DeckGLMap extends React.PureComponent {
             "image": null
         }],
         selectedAddress: {},
+        selectedType: '',
+        apiUrl:''
     }
 
     componentDidMount(){
@@ -85,10 +87,14 @@ class DeckGLMap extends React.PureComponent {
     }
 
     componentDidUpdate(prevProps, prevState){
-        const { selectedAddress, addressList, initial_view_state } = this.state
+        const { selectedAddress, addressList, selectedType, initial_view_state } = this.state
         // console.log({addressList})
-        if (prevState.selectedAddress !== selectedAddress || prevState.addressList !== addressList){
-            this._createLayer()
+        if (
+            prevState.selectedAddress !== selectedAddress 
+            || prevState.addressList !== addressList
+            || prevState.selectedType !== selectedType
+        ){
+            // this._createLayer()
             this.setState(preState => ({
                 ...preState.initial_view_state,
                 longitude:selectedAddress.longitude,
@@ -201,7 +207,17 @@ class DeckGLMap extends React.PureComponent {
 
     _handleOnCreate = ({features}) => {
         const { _handleUpdateAddress } = this
-     
+        const { selectedType } = this.state
+        const pTypeList = [
+            'Residential',
+            'Commercial'
+        ]
+        const subTypeList = [
+            'Kindergarden',
+            'Hospital',
+            'School'
+        ]
+        // console.log({selectedType})
         const coordinates = features[0]?.geometry?.coordinates[0]
         let areaQueryStr = ''
         let count = 0
@@ -213,7 +229,26 @@ class DeckGLMap extends React.PureComponent {
             }
         }
         // features[0]?.geometry?.coordinates[0]
-        const url = `https://api.bmapsbd.com/get/custom/polygon?area=${areaQueryStr}`
+        // &pType=Shop&subType=Saloon
+        let url = `${API.GET_DATA}?area=${areaQueryStr}`
+        if( selectedType && pTypeList.includes(selectedType)){
+            url+=`&pType=${selectedType}`
+        } else {
+            url+=`&subType=${selectedType}`
+        }
+
+        this.setState({apiUrl:url})
+        this._handleGetData(url)
+        // console.log(areaQueryStr)
+        // this._handleGetData(areaQueryStr)
+        
+    }
+    _handleOnRemove = () => {
+        this.setState({addressList:[]})
+     
+    }
+    _handleGetData = (url) => {
+        const { _handleUpdateAddress } = this
         fetch(url)
         .then( res => res.json())
         .then( res => res.places )
@@ -224,28 +259,11 @@ class DeckGLMap extends React.PureComponent {
                 _handleUpdateAddress(res)
             }
         })
-        // console.log(areaQueryStr)
-        // this._handleGetData(areaQueryStr)
-        
-    }
-    _handleOnRemove = () => {
-        console.log("on remve")
-        this.setState({addressList:[]})
-     
-    }
-    _handleGetData(areaQueryStr){
-        console.log(areaQueryStr)
-
-        // const url = "https://api.bmapsbd.com/get/custom/polygon?area=90.362471%2023.740238,90.362471%2023.740432,90.363101%2023.740432,90.363101%2023.740238,90.362471%2023.740238"
-        const url = `https://api.bmapsbd.com/get/custom/polygon?area=${areaQueryStr}`
-        fetch(url)
-        .then( res => res.json())
-        .then( res => {
-            this.setState({addressList:res?.places})
-        })
     }
 
-
+    _handleInputChange = (e) =>{
+        this.setState({selectedType:e.target.value})
+    }
     // {
     //     "Address": "M&M, España",
     //     "city": "Felanich",
@@ -259,12 +277,25 @@ class DeckGLMap extends React.PureComponent {
     //     "street": null
     // }
     render() {
-        const { initial_view_state, layers, thana, addressList, selectedAddress } = this.state
-        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate, _handleOnRemove } = this
+        const { initial_view_state, layers, thana, addressList, selectedAddress, selectedType } = this.state
+        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate, _handleOnRemove, _handleInputChange } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%'}}>
-                    <Box sx={{ 
+                    <StyledSelect
+                        _handleInputChange = { _handleInputChange }
+                        selectOptions={[
+                            'Residential',
+                            'Commercial',
+                            'Kindergarden',
+                            'Hospital',
+                            'School'
+                        ]}
+                        value={ selectedType }
+                        title={'Types'}
+
+                    />
+                    {/* <Box sx={{ 
                         display:'flex', 
                         alignItems:'center',
                         justifyContent:'center',
@@ -284,7 +315,7 @@ class DeckGLMap extends React.PureComponent {
                             fieldStyle={{width:'95%'}}
                         />
                         <SearchIcon sx={{color:'green', fontSize:'28px',pr:'5px'}}  size="inherit" />
-                    </Box>
+                    </Box> */}
                     
                     { (selectedAddress && Object.keys(selectedAddress).length)?  
                          <Box 
@@ -333,12 +364,11 @@ class DeckGLMap extends React.PureComponent {
                         {  addressList?.map( d => 
                             
                             <Marker 
-                                   
-                                    longitude={ d["longitude"] } 
-                                    latitude={ d["latitude"] } 
-                                    anchor="bottom" 
-                                    scale={1}
-                                >
+                                longitude={ d["longitude"] } 
+                                latitude={ d["latitude"] } 
+                                anchor="bottom" 
+                                scale={1}
+                            >
                                 <img src={markerIcon} style={{height:'40px', width:'40px'}}/>
                             </Marker>
                                 
