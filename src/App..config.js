@@ -22,7 +22,8 @@ const MAP_API = {
         }
     ]
 }
-const baseUrl = 'https://api.bmapsbd.com'
+// const baseUrl = 'https://api.bmapsbd.com'
+const baseUrl = 'http://bkoih3.ml:9000'
 const API = {
     GET_DATA:`${baseUrl}/get/custom/polygon`
 }
