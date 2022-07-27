@@ -25,6 +25,7 @@ const MAP_API = {
 // const baseUrl = 'https://api.bmapsbd.com'
 const baseUrl = 'http://bkoih3.ml:9000'
 const API = {
+    AUTOCOMPLETE: `http://elastic.bmapsbd.com/obd/search/hotels/test?q`,
     GET_DATA:`${baseUrl}/get/custom/polygon`
 }
 export { MAP_API, API }

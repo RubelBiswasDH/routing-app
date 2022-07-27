@@ -5,6 +5,7 @@ import Map, {useControl, Marker} from 'react-map-gl';
 import { MAP_API, API } from '../App..config'
 import AutoComplete from './common/AutoComplete'
 import StyledSelect from './common/StyledSelect'
+import StyledSnackBar from './common/StyledSnackBar'
 import { Box, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import mapboxgl from 'mapbox-gl';
@@ -78,7 +79,8 @@ class DeckGLMap extends React.PureComponent {
         }],
         selectedAddress: {},
         selectedType: '',
-        apiUrl:''
+        apiUrl:'',
+        isToastOpen:false
     }
 
     componentDidMount(){
@@ -190,7 +192,7 @@ class DeckGLMap extends React.PureComponent {
     }
 
     _handleAddressList = (value) => {
-        const autocompleteUrl = `http://elastic.bmapsbd.com/obd/search/hotels/test?q=${value}`
+        const autocompleteUrl = `${API.AUTOCOMPLETE}=${value}`
         if (value && value.length){
             fetch(autocompleteUrl)
             .then( res => res.json())
@@ -208,6 +210,10 @@ class DeckGLMap extends React.PureComponent {
     _handleOnCreate = ({features}) => {
         const { _handleUpdateAddress } = this
         const { selectedType } = this.state
+        if ( !selectedType ) {
+            this.setState({isToastOpen:true})
+            return
+        }
         const pTypeList = [
             'Residential',
             'Commercial'
@@ -264,6 +270,33 @@ class DeckGLMap extends React.PureComponent {
     _handleInputChange = (e) =>{
         this.setState({selectedType:e.target.value})
     }
+
+    _getIconUrl = (type) => {
+        let iconBaseUrl = 'https://barikoi-dev-resources.s3.ap-southeast-1.amazonaws.com/marker-icons'
+        switch(type) {
+            case "Residential":
+                return `${iconBaseUrl}/residential.png`
+                break;
+            case "Commercial":
+                return `${iconBaseUrl}/commercial.png`
+                break;
+            case "Kindergarden":
+                return `${iconBaseUrl}/education.png`
+                break;
+            case "School":
+                return `${iconBaseUrl}/education.png`
+                break;
+            case "Hospital":
+                return `${iconBaseUrl}/hospital.png`
+                break;
+            default:
+                return markerIcon
+        }
+    }
+
+    _handleToastClose = () => {
+        this.setState({isToastOpen:false})
+    }
     // {
     //     "Address": "M&M, España",
     //     "city": "Felanich",
@@ -277,8 +310,8 @@ class DeckGLMap extends React.PureComponent {
     //     "street": null
     // }
     render() {
-        const { initial_view_state, layers, thana, addressList, selectedAddress, selectedType } = this.state
-        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate, _handleOnRemove, _handleInputChange } = this
+        const { initial_view_state, layers, thana, addressList, selectedAddress, selectedType, isToastOpen } = this.state
+        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%'}}>
@@ -369,7 +402,9 @@ class DeckGLMap extends React.PureComponent {
                                 anchor="bottom" 
                                 scale={1}
                             >
-                                <img src={markerIcon} style={{height:'40px', width:'40px'}}/>
+                                {/* <img src={markerIcon} style={{height:'40px', width:'40px'}}/> */}
+                                <img 
+                                    src={_getIconUrl(this.state.selectedType)} style={{height:'40px', width:'40px'}}/> 
                             </Marker>
                                 
                         
@@ -385,6 +420,12 @@ class DeckGLMap extends React.PureComponent {
                     </Map>
 
                 </div>
+                <StyledSnackBar 
+                    toastIsOpen={ isToastOpen } 
+                    _handleToastClose={ _handleToastClose }
+                    toastSeverity = {'warning'}
+                    toastMessage = {'Please select a type from dropdown before selecting area!'}
+                />
             </div>
         )
     }
