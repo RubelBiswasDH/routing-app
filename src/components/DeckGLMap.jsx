@@ -1,14 +1,15 @@
 import React from 'react'
 import DeckGL from '@deck.gl/react'
 import { IconLayer } from '@deck.gl/layers'
-import { Map } from 'react-map-gl'
+import Map, {useControl} from 'react-map-gl';
 import { MAP_API } from '../App..config'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import AutoComplete from './common/AutoComplete'
 import { Box, Typography } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import mapboxgl from 'mapbox-gl';
-
+import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
 
@@ -19,6 +20,13 @@ const ICON_MAPPING = {
   marker: {x: 0, y: 0, width: 128, height: 128, mask: true}
 };
 
+function DrawControl(props) {
+  useControl(() => new MapboxDraw(props), {
+    position: props.position
+  });
+
+  return null;
+}
 
 class DeckGLMap extends React.PureComponent {
 
@@ -141,7 +149,9 @@ class DeckGLMap extends React.PureComponent {
             })
         }
     }
-
+    _handleOnCreate(){
+        console.log('handle on create !')
+    }
     // {
     //     "Address": "M&M, España",
     //     "city": "Felanich",
@@ -156,7 +166,7 @@ class DeckGLMap extends React.PureComponent {
     // }
     render() {
         const { initial_view_state, layers, thana, addressList, selectedAddress } = this.state
-        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange } = this
+        const { _handleChange, _handleAutoCompInputChange, _handleAutoCompChange, _handleOnCreate } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%'}}>
@@ -201,19 +211,30 @@ class DeckGLMap extends React.PureComponent {
                         position: "relative"
                     }}
                 >
-                    <DeckGL
+                    {/* <DeckGL
                         initialViewState={initial_view_state}
                         controller={true}
                         layers={layers} 
                         width={"100%"} 
                         height={"100vh"}
                         sx={{position:'relative',border:'1px solid red'}}
+                    /> */}
+                    <Map 
+                        initialViewState={initial_view_state}
+                        mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
+                        mapStyle = { MAP_API.STYLES[3].uri }
                     >
-                        <Map 
-                            mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
-                            mapStyle = { MAP_API.STYLES[3].uri }
+                        <DrawControl
+                            onCreate = { _handleOnCreate }
+                            position="top-left"
+                            displayControlsDefault={false}
+                            controls={{
+                            polygon: true,
+                            trash: true
+                            }}
                         />
-                    </DeckGL>   
+                    </Map>
+
                 </div>
             </div>
         )
