@@ -30,7 +30,7 @@ function DrawControl(props) {
   return null;
 }
 
-class DeckGLMap extends React.PureComponent {
+class Home extends React.PureComponent {
 
     state = {
         initial_view_state : {
@@ -284,4 +284,4 @@ class DeckGLMap extends React.PureComponent {
     }
 }
 
-export default DeckGLMap;
+export default Home;

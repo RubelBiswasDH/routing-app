@@ -1,10 +1,10 @@
 import './App.css';
-import DeckGLMap from './components/DeckGLMap';
+import Home from './components/Home';
 
 function App() {
   return (
     <div>
-      <DeckGLMap/>
+      <Home/>
     </div>
   );
 }
