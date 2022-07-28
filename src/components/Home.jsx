@@ -245,7 +245,7 @@ class Home extends React.PureComponent {
                     <Map 
                         initialViewState={initial_view_state}
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
-                        mapStyle = { MAP_API.STYLES[3].uri }
+                        mapStyle = { MAP_API.STYLES[1].uri }
                     >
                         <DrawControl
                             onCreate = { _handleOnCreate }

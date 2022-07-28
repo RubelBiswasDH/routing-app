@@ -14,7 +14,7 @@ const MAP_API = {
         },
         {
             title: 'Dark',
-            uri:'https://map.barikoi.com/styles/barikoi-dark/style.json'
+            uri:'https://map.barikoi.com/styles/barikoi-dark/style.json?key=Mjg5MTpGMDNaTU1HTjZ'
         },
         {
             title: 'Test',
