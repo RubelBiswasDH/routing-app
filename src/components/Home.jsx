@@ -10,6 +10,10 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import markerIcon from '../assets/marker--v1'
+import commercialIcon from '../assets/commercial'
+import educationIcon from '../assets/education'
+import healthcareIcon from '../assets/healthcare'
+import residentialIcon from '../assets/residential'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
@@ -168,18 +172,17 @@ class Home extends React.PureComponent {
     }
 
     _getIconUrl = (type) => {
-        let iconBaseUrl = 'https://barikoi-dev-resources.s3.ap-southeast-1.amazonaws.com/marker-icons'
         switch(type) {
             case "Residential":
-                return `${iconBaseUrl}/residential.png`
+                return residentialIcon
             case "Commercial":
-                return `${iconBaseUrl}/commercial.png`
+                return commercialIcon
             case "Kindergarden":
-                return `${iconBaseUrl}/education.png`
+                return educationIcon
             case "School":
-                return `${iconBaseUrl}/education.png`
+                return educationIcon
             case "Hospital":
-                return `${iconBaseUrl}/hospital.png`
+                return healthcareIcon
             default:
                 return markerIcon
         }
