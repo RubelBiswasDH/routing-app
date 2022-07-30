@@ -14,7 +14,14 @@ class StyledSelect extends React.PureComponent{
         
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
-                <FormControl sx={{ m: 1, minWidth: 120 }} size="small" fullWidth={true}>
+                <FormControl 
+                    sx={{
+                        m: 1, 
+                        minWidth: 120 
+                    }} 
+                    size="small" 
+                    fullWidth={true}
+                >
                     <InputLabel id="demo-select-small">{title}</InputLabel>
                     <Select
                         labelId="demo-select-small"

@@ -23,19 +23,22 @@ const ICON_MAPPING = {
 };
 
 function DrawControl(props) {
-  useControl((map) => {
-    map.map.on('draw.create', props.onCreate)
-    map.map.on('draw.update', props.onUpdate)
-    map.map.on('draw.delete', props.onDelete)
-    return new MapboxDraw(props)}, {
-    position: props.position
-  });
+  useControl(
+    (map) => {
+        map.map.on('draw.create', props.onCreate)
+        map.map.on('draw.update', props.onUpdate)
+        map.map.on('draw.delete', props.onDelete)
+        return new MapboxDraw(props)
+    },
+    {
+        position: props.position
+    }
+  );
 
   return null;
 }
 
 class Home extends React.PureComponent {
-
     state = {
         initial_view_state : {
             longitude: 90.39017821904588,
@@ -191,18 +194,7 @@ class Home extends React.PureComponent {
     _handleToastClose = () => {
         this.setState({isToastOpen:false})
     }
-    // {
-    //     "Address": "M&M, España",
-    //     "city": "Felanich",
-    //     "country": "España",
-    //     "county": "Migjorn",
-    //     "latitude": 39.420082,
-    //     "longitude": 3.27203,
-    //     "name": "M&M",
-    //     "postcode": "07670",
-    //     "state": "Illes Balears",
-    //     "street": null
-    // }
+
     render() {
         const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen } = this.state
         const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
@@ -254,8 +246,8 @@ class Home extends React.PureComponent {
                             position="top-left"
                             displayControlsDefault={false}
                             controls={{
-                            polygon: true,
-                            trash: true
+                                polygon: true,
+                                trash: true
                             }}
                         />
                         
@@ -274,7 +266,6 @@ class Home extends React.PureComponent {
                             </Marker>
                         ) }
                     </Map>
-
                 </div>
                 <StyledSnackBar 
                     toastIsOpen={ isToastOpen } 
