@@ -222,6 +222,14 @@ class Home extends React.PureComponent {
                         value={ selectedType }
                         title={'Type'}
                     />
+                    { this.state.selectedType &&
+                        <Typography
+                            variant='h6'
+                            sx={{ px: 2 }}
+                        >
+                            <span style={{ fontWeight: 600 }}>Total { this.state.selectedType } Count : </span>{ this.state.addressList.length }
+                        </Typography>
+                    }
                     
                     { (selectedAddress && Object.keys(selectedAddress).length)?  
                          <Box 
