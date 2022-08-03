@@ -29,9 +29,9 @@ function DrawControl(props) {
     map.map.on('draw.delete', props.onDelete)
     return new MapboxDraw(props)}, {
     position: props.position
-  });
+  })
 
-  return null;
+  return null
 }
 
 class Home extends React.PureComponent {
@@ -49,7 +49,8 @@ class Home extends React.PureComponent {
         selectedAddress: {},
         selectedType: '',
         apiUrl:'',
-        isToastOpen:false
+        isToastOpen:false,
+        disableSelect: false
     }
 
     componentDidMount(){
@@ -57,13 +58,17 @@ class Home extends React.PureComponent {
     }
 
     componentDidUpdate(prevProps, prevState){
-        const { selectedAddress, addressList, selectedType } = this.state
+        const { selectedAddress, selectedType, apiUrl } = this.state
         if (
-            prevState.selectedAddress !== selectedAddress 
-            || prevState.addressList !== addressList
-            || prevState.selectedType !== selectedType
-        ){
-            // this._createLayer()
+            ( 
+                prevState.selectedType !== selectedType
+            )
+            & (
+                apiUrl && apiUrl?.length
+            ) 
+        ){  
+            console.log({url:apiUrl})
+            this._handleGetData(apiUrl)
             this.setState(preState => ({
                 ...preState.initial_view_state,
                 longitude:selectedAddress.longitude,
@@ -113,21 +118,10 @@ class Home extends React.PureComponent {
     }
 
     _handleUpdateAddress = (addressList) => {
-        this.setState({addressList:addressList})
+        this.setState({ addressList:addressList })
     }
 
     _handleOnCreate = ({features}) => {
-        const { selectedType } = this.state
-
-        if ( !selectedType ) {
-            this.setState({isToastOpen:true})
-            return
-        }
-
-        const pTypeList = [
-            'Residential',
-            'Commercial'
-        ]
         const coordinates = features[0]?.geometry?.coordinates[0]
         let areaQueryStr = ''
         let count = 0
@@ -141,34 +135,55 @@ class Home extends React.PureComponent {
         }
 
         let url = `${API.GET_DATA}?area=${areaQueryStr}`
+        this.setState({apiUrl:url})
+        this.setState({ disableSelect: true })
+        this._handleGetData(url)
+    }
+
+    _handleOnRemove = () => {
+        this.setState({
+            addressList: [],
+            disableSelect: false,
+            apiUrl: ''
+        })
+    }
+
+    _handleGetData = (url) => {
+        const { _handleUpdateAddress } = this
+        const { selectedType } = this.state
+        if ( !selectedType ) {
+            this.setState({isToastOpen:true})
+            return
+        }
+
+        const pTypeList = [
+            'Residential',
+            'Commercial'
+        ]
+        
         if( selectedType && pTypeList.includes(selectedType)){
             url+=`&pType=${selectedType}`
         } else {
             url+=`&subType=${selectedType}`
         }
-
-        this.setState({apiUrl:url})
-        this._handleGetData(url)
-    }
-
-    _handleOnRemove = () => {
-        this.setState({addressList:[]})
-    }
-
-    _handleGetData = (url) => {
-        const { _handleUpdateAddress } = this
-        fetch(url)
-        .then( res => res.json())
-        .then( res => res.places )
-        .then( res =>  {
-            if(_handleUpdateAddress){
-                _handleUpdateAddress(res)
-            }
-        })
+        if(url && url.length){
+            fetch(url)
+            .then( res => res.json())
+            .then( res => res.places )
+            .then( res =>  {
+                if(_handleUpdateAddress){
+                    _handleUpdateAddress(res)
+                }
+            })
+        }
     }
 
     _handleInputChange = (e) =>{
-        this.setState({selectedType:e.target.value})
+        this._handleOnRemove()
+
+        this.setState({
+            selectedType: e.target.value
+        })
     }
 
     _getIconUrl = (type) => {
@@ -191,26 +206,16 @@ class Home extends React.PureComponent {
     _handleToastClose = () => {
         this.setState({isToastOpen:false})
     }
-    // {
-    //     "Address": "M&M, España",
-    //     "city": "Felanich",
-    //     "country": "España",
-    //     "county": "Migjorn",
-    //     "latitude": 39.420082,
-    //     "longitude": 3.27203,
-    //     "name": "M&M",
-    //     "postcode": "07670",
-    //     "state": "Illes Balears",
-    //     "street": null
-    // }
+
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen } = this.state
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, disableSelect } = this.state
         const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
         
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
                     <StyledSelect
+                        disableSelect={ disableSelect }
                         _handleInputChange = { _handleInputChange }
                         selectOptions={[
                             'Residential',
@@ -262,13 +267,14 @@ class Home extends React.PureComponent {
                             position="top-left"
                             displayControlsDefault={false}
                             controls={{
-                            polygon: true,
-                            trash: true
+                                polygon: true,
+                                trash: true
                             }}
                         />
                         
                         {  addressList?.map( d => 
                             <Marker 
+                                key={ d["longitude"]+d['Address'] }
                                 longitude={ d["longitude"] } 
                                 latitude={ d["latitude"] } 
                                 anchor="bottom" 
