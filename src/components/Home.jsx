@@ -1,12 +1,12 @@
 import React from 'react'
 import { IconLayer } from '@deck.gl/layers'
-import Map, { useControl, Marker } from 'react-map-gl';
+import Map, { useControl, Marker } from 'react-map-gl'
 import { MAP_API, API } from '../App..config'
 import StyledSelect from './common/StyledSelect'
 import StyledSnackBar from './common/StyledSnackBar'
-import { Box, Typography } from '@mui/material'
-import mapboxgl from 'mapbox-gl';
-import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import { Box, Typography, LinearProgress } from '@mui/material'
+import mapboxgl from 'mapbox-gl'
+import MapboxDraw from "@mapbox/mapbox-gl-draw"
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import markerIcon from '../assets/marker--v1'
@@ -50,7 +50,9 @@ class Home extends React.PureComponent {
         selectedType: '',
         apiUrl:'',
         isToastOpen:false,
-        disableSelect: false
+        toastMessage: '',
+        disableSelect: false,
+        dataLoading: false
     }
 
     componentDidMount(){
@@ -66,8 +68,7 @@ class Home extends React.PureComponent {
             & (
                 apiUrl && apiUrl?.length
             ) 
-        ){  
-            console.log({url:apiUrl})
+        ){
             this._handleGetData(apiUrl)
             this.setState(preState => ({
                 ...preState.initial_view_state,
@@ -152,10 +153,13 @@ class Home extends React.PureComponent {
         const { _handleUpdateAddress } = this
         const { selectedType } = this.state
         if ( !selectedType ) {
-            this.setState({isToastOpen:true})
+            this.setState({ 
+                isToastOpen: true, 
+                toastMessage: 'Please select a type from dropdown before selecting area!'
+            })
             return
         }
-
+        this.setState({ dataLoading: true })
         const pTypeList = [
             'Residential',
             'Commercial'
@@ -166,14 +170,25 @@ class Home extends React.PureComponent {
         } else {
             url+=`&subType=${selectedType}`
         }
+
         if(url && url.length){
             fetch(url)
             .then( res => res.json())
             .then( res => res.places )
             .then( res =>  {
-                if(_handleUpdateAddress){
+                if(res?.length){
                     _handleUpdateAddress(res)
+                } else {
+                    this.setState({ 
+                        isToastOpen: true, 
+                        toastMessage: 'No data found for selected input !'
+                    })
                 }
+                this.setState({ dataLoading: false })
+            })
+            .catch( err => {
+                console.err(err)
+                this.setState({ dataLoading: true })
             })
         }
     }
@@ -204,11 +219,14 @@ class Home extends React.PureComponent {
     }
 
     _handleToastClose = () => {
-        this.setState({isToastOpen:false})
+        this.setState({
+            isToastOpen:false,
+            toastMessage: ''
+        })
     }
 
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, disableSelect } = this.state
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, disableSelect, dataLoading } = this.state
         const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
         
         return(
@@ -251,10 +269,16 @@ class Home extends React.PureComponent {
                 <div 
                     style={{
                         display:'flex', 
+                        flexDirection: 'column',
                         width:'75%',
                         position: "relative"
                     }}
-                >
+                >    
+                    { dataLoading && 
+                        <Box sx={{ width: '100%' }}>
+                            <LinearProgress />
+                        </Box>
+                    }
                     <Map 
                         initialViewState={initial_view_state}
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
@@ -294,7 +318,7 @@ class Home extends React.PureComponent {
                     toastIsOpen={ isToastOpen } 
                     _handleToastClose={ _handleToastClose }
                     toastSeverity = {'warning'}
-                    toastMessage = {'Please select a type from dropdown before selecting area!'}
+                    toastMessage = { toastMessage }
                 />
             </div>
         )
