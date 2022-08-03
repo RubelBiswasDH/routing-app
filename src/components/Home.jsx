@@ -1,12 +1,12 @@
 import React from 'react'
 import { IconLayer } from '@deck.gl/layers'
-import Map, { useControl, Marker } from 'react-map-gl';
+import Map, { useControl, Marker } from 'react-map-gl'
 import { MAP_API, API } from '../App..config'
 import StyledSelect from './common/StyledSelect'
 import StyledSnackBar from './common/StyledSnackBar'
-import { Box, Typography } from '@mui/material'
-import mapboxgl from 'mapbox-gl';
-import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import { Box, Typography, LinearProgress } from '@mui/material'
+import mapboxgl from 'mapbox-gl'
+import MapboxDraw from "@mapbox/mapbox-gl-draw"
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import markerIcon from '../assets/marker--v1'
@@ -35,7 +35,7 @@ function DrawControl(props) {
     }
   );
 
-  return null;
+  return null
 }
 
 class Home extends React.PureComponent {
@@ -52,7 +52,10 @@ class Home extends React.PureComponent {
         selectedAddress: {},
         selectedType: '',
         apiUrl:'',
-        isToastOpen:false
+        isToastOpen:false,
+        toastMessage: '',
+        disableSelect: false,
+        dataLoading: false
     }
 
     componentDidMount(){
@@ -60,13 +63,16 @@ class Home extends React.PureComponent {
     }
 
     componentDidUpdate(prevProps, prevState){
-        const { selectedAddress, addressList, selectedType } = this.state
+        const { selectedAddress, selectedType, apiUrl } = this.state
         if (
-            prevState.selectedAddress !== selectedAddress 
-            || prevState.addressList !== addressList
-            || prevState.selectedType !== selectedType
+            ( 
+                prevState.selectedType !== selectedType
+            )
+            & (
+                apiUrl && apiUrl?.length
+            ) 
         ){
-            // this._createLayer()
+            this._handleGetData(apiUrl)
             this.setState(preState => ({
                 ...preState.initial_view_state,
                 longitude:selectedAddress.longitude,
@@ -116,21 +122,10 @@ class Home extends React.PureComponent {
     }
 
     _handleUpdateAddress = (addressList) => {
-        this.setState({addressList:addressList})
+        this.setState({ addressList:addressList })
     }
 
     _handleOnCreate = ({features}) => {
-        const { selectedType } = this.state
-
-        if ( !selectedType ) {
-            this.setState({isToastOpen:true})
-            return
-        }
-
-        const pTypeList = [
-            'Residential',
-            'Commercial'
-        ]
         const coordinates = features[0]?.geometry?.coordinates[0]
         let areaQueryStr = ''
         let count = 0
@@ -144,34 +139,69 @@ class Home extends React.PureComponent {
         }
 
         let url = `${API.GET_DATA}?area=${areaQueryStr}`
+        this.setState({apiUrl:url})
+        this.setState({ disableSelect: true })
+        this._handleGetData(url)
+    }
+
+    _handleOnRemove = () => {
+        this.setState({
+            addressList: [],
+            disableSelect: false,
+            apiUrl: ''
+        })
+    }
+
+    _handleGetData = (url) => {
+        const { _handleUpdateAddress } = this
+        const { selectedType } = this.state
+        if ( !selectedType ) {
+            this.setState({ 
+                isToastOpen: true, 
+                toastMessage: 'Please select a type from dropdown before selecting area!'
+            })
+            return
+        }
+        this.setState({ dataLoading: true })
+        const pTypeList = [
+            'Residential',
+            'Commercial'
+        ]
+        
         if( selectedType && pTypeList.includes(selectedType)){
             url+=`&pType=${selectedType}`
         } else {
             url+=`&subType=${selectedType}`
         }
 
-        this.setState({apiUrl:url})
-        this._handleGetData(url)
-    }
-
-    _handleOnRemove = () => {
-        this.setState({addressList:[]})
-    }
-
-    _handleGetData = (url) => {
-        const { _handleUpdateAddress } = this
-        fetch(url)
-        .then( res => res.json())
-        .then( res => res.places )
-        .then( res =>  {
-            if(_handleUpdateAddress){
-                _handleUpdateAddress(res)
-            }
-        })
+        if(url && url.length){
+            fetch(url)
+            .then( res => res.json())
+            .then( res => res.places )
+            .then( res =>  {
+                if(res?.length){
+                    _handleUpdateAddress(res)
+                } else {
+                    this.setState({ 
+                        isToastOpen: true, 
+                        toastMessage: 'No data found for selected input !'
+                    })
+                }
+                this.setState({ dataLoading: false })
+            })
+            .catch( err => {
+                console.err(err)
+                this.setState({ dataLoading: true })
+            })
+        }
     }
 
     _handleInputChange = (e) =>{
-        this.setState({selectedType:e.target.value})
+        this._handleOnRemove()
+
+        this.setState({
+            selectedType: e.target.value
+        })
     }
 
     _getIconUrl = (type) => {
@@ -192,17 +222,21 @@ class Home extends React.PureComponent {
     }
 
     _handleToastClose = () => {
-        this.setState({isToastOpen:false})
+        this.setState({
+            isToastOpen:false,
+            toastMessage: ''
+        })
     }
 
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen } = this.state
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, disableSelect, dataLoading } = this.state
         const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
         
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
                     <StyledSelect
+                        disableSelect={ disableSelect }
                         _handleInputChange = { _handleInputChange }
                         selectOptions={[
                             'Residential',
@@ -238,10 +272,16 @@ class Home extends React.PureComponent {
                 <div 
                     style={{
                         display:'flex', 
+                        flexDirection: 'column',
                         width:'75%',
                         position: "relative"
                     }}
-                >
+                >    
+                    { dataLoading && 
+                        <Box sx={{ width: '100%' }}>
+                            <LinearProgress />
+                        </Box>
+                    }
                     <Map 
                         initialViewState={initial_view_state}
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
@@ -261,6 +301,7 @@ class Home extends React.PureComponent {
                         
                         {  addressList?.map( d => 
                             <Marker 
+                                key={ d["longitude"]+d['Address'] }
                                 longitude={ d["longitude"] } 
                                 latitude={ d["latitude"] } 
                                 anchor="bottom" 
@@ -279,7 +320,7 @@ class Home extends React.PureComponent {
                     toastIsOpen={ isToastOpen } 
                     _handleToastClose={ _handleToastClose }
                     toastSeverity = {'warning'}
-                    toastMessage = {'Please select a type from dropdown before selecting area!'}
+                    toastMessage = { toastMessage }
                 />
             </div>
         )

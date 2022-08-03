@@ -10,18 +10,11 @@ import Select from '@mui/material/Select';
 class StyledSelect extends React.PureComponent{
 
     render(){ 
-        const { _handleInputChange, selectOptions, title, value, sx } = this.props
+        const { _handleInputChange, selectOptions, title, value, sx, disableSelect } = this.props
         
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
-                <FormControl 
-                    sx={{
-                        m: 1, 
-                        minWidth: 120 
-                    }} 
-                    size="small" 
-                    fullWidth={true}
-                >
+                <FormControl disabled={ disableSelect } sx={{ m: 1, minWidth: 120 }} size="small" fullWidth={true}>
                     <InputLabel id="demo-select-small">{title}</InputLabel>
                     <Select
                         labelId="demo-select-small"
@@ -47,7 +40,8 @@ StyledSelect.propTypes = {
     selectOptions: PropTypes.array,
     title: PropTypes.string,
     value: PropTypes.any,
-    sx: PropTypes.object
+    sx: PropTypes.object,
+    disableSelect: PropTypes.bool
 }
 
 StyledSelect.defaultProps = {
@@ -56,7 +50,8 @@ StyledSelect.defaultProps = {
   selectOptions: [],
   title: '',
   value: null,
-  sx: null
+  sx: null,
+  disableSelect: false
 }
 
 export default StyledSelect
