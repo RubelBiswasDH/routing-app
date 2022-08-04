@@ -77,7 +77,8 @@ class Home extends React.PureComponent {
         lineData: null,
         geoJson: null,
         markerData : {},
-        showPopup : true
+        showPopup : true,
+        popup_lngLat: null
     }
 
     componentDidMount(){
@@ -439,26 +440,77 @@ class Home extends React.PureComponent {
     }
     
     //handle popup open and close
-    _handleShowPopup = (value) => {
-        this.setState({ showPopup: value })
+    _handleClosePopup = (value) => {
+        this.setState({ 
+            showPopup: value,
+            popup_lngLat: null
+        })
     }
 
     // set the starting point of route line
-    _handleSetStartPoint = (a, b, c) => {
-        console.log({ a, b, c})
+    _handleSetStartPoint = (lngLat) => {
+        this.setState( preState => ({
+            showPopup: false, 
+            start_address: {
+                geo_location: [ lngLat.lng, lngLat.lat ],
+                longitude: lngLat.lng,
+                latitude: lngLat.lat
+            },
+            markerData: { 
+                ...preState.markerData,
+                start: {
+                    ...{
+                        longitude: lngLat.lng,
+                        latitude: lngLat.lat
+                    },
+                    addressPointType: 'start'
+                }
+            }
+        }))
     }
+
+    _handleSetEndPoint = (lngLat) => {
+        this.setState( preState => ({
+            showPopup: false, 
+            end_address: {
+                geo_location: [ lngLat.lng, lngLat.lat ],
+                longitude: lngLat.lng,
+                latitude: lngLat.lat
+            },
+            markerData: { 
+                ...preState.markerData,
+                end: {
+                    ...{
+                        longitude: lngLat.lng,
+                        latitude: lngLat.lat
+                    },
+                    addressPointType: 'end'
+                }
+            }
+        }))
+    }
+
+    _handleRightClick = (e) => {
+        this.setState({
+            showPopup: true,
+            popup_lngLat: e?.lngLat
+        })
+    }
+
+
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, start_address, end_address, dataLoading, geoJson, markerData, showPopup, route_info } = this.state
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, start_address, end_address, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat } = this.state
         const { _getIconUrl, 
                 _handleToastClose, 
                 _handleStartAutoCompChangeInputChange, 
                 _handleStartAutoCompChange, 
                 _handleEndAutoCompChangeInputChange, 
                 _handleEndAutoCompChange, 
-                _handleShowPopup,
-                _handleSetStartPoint
+                _handleClosePopup,
+                _handleSetStartPoint,
+                _handleSetEndPoint,
+                _handleRightClick
         } = this
-        console.log({ route_info })
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
@@ -499,11 +551,12 @@ class Home extends React.PureComponent {
                         initialViewState={initial_view_state}
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
                         mapStyle = { MAP_API.STYLES[1].uri }
+                        onContextMenu = { _handleRightClick }
                     >
-                        { showPopup && (
-                            <Popup longitude={ initial_view_state.longitude } latitude={ initial_view_state.latitude }
+                        { (showPopup && popup_lngLat && Object.keys(popup_lngLat)?.length) && (
+                            <Popup longitude={ popup_lngLat.lng } latitude={ popup_lngLat.lat }
                                 anchor="bottom"
-                                onClose={() => _handleShowPopup(false)}
+                                onClose={() => _handleClosePopup(false)}
                             >
                                 <Box 
                                     sx={{ 
@@ -511,9 +564,11 @@ class Home extends React.PureComponent {
                                         flexDirection: 'column'
                                     }}
                                 >
-                                    You are here
-                                    <Button variant="text" size={ 'small' } onClick={ _handleSetStartPoint }>
-                                        <Typography sx={{ fontSize: '.7rem'}}>Text</Typography>
+                                    <Button variant="text" size={ 'small' } onClick={ () => _handleSetStartPoint(popup_lngLat) }>
+                                        <Typography sx={{ fontSize: '.7rem'}}>Set as Start Point</Typography>
+                                    </Button>
+                                    <Button variant="text" size={ 'small' } onClick={ () => _handleSetEndPoint(popup_lngLat) }>
+                                        <Typography sx={{ fontSize: '.7rem'}}>Set as End Point</Typography>
                                     </Button>
                                 </Box>
                             </Popup>
