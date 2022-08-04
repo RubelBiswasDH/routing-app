@@ -66,13 +66,13 @@ class Home extends React.PureComponent {
         const { selectedAddress, selectedType, apiUrl } = this.state
         if (
             ( 
-                prevState.selectedType !== selectedType
+                selectedType && prevState.selectedType !== selectedType
             )
-            & (
+            && (
                 apiUrl && apiUrl?.length
             ) 
-        ){
-            this._handleGetData(apiUrl)
+        ){  
+            this._handleGetData(apiUrl, selectedType)
             this.setState(preState => ({
                 ...preState.initial_view_state,
                 longitude:selectedAddress.longitude,
@@ -86,15 +86,15 @@ class Home extends React.PureComponent {
         switch(value) {
             case "Chawk Bazar":
                 color = [ 220,20,60 ]
-                break;
+                break
             case 'Lalbagh':
                 color = [ 123, 104, 238 ]
-                break;
+                break
             case "Kotwali":
                 color = [ 123, 120, 238 ]
-                break;
+                break
             default:
-              color = [255, 140, 0]
+                color = [255, 140, 0]
         }
         return color
     }
@@ -122,10 +122,11 @@ class Home extends React.PureComponent {
     }
 
     _handleUpdateAddress = (addressList) => {
-        this.setState({ addressList:addressList })
+        this.setState({ addressList: addressList })
     }
 
     _handleOnCreate = ({features}) => {
+        const { selectedType } = this.state
         const coordinates = features[0]?.geometry?.coordinates[0]
         let areaQueryStr = ''
         let count = 0
@@ -141,20 +142,18 @@ class Home extends React.PureComponent {
         let url = `${API.GET_DATA}?area=${areaQueryStr}`
         this.setState({apiUrl:url})
         this.setState({ disableSelect: true })
-        this._handleGetData(url)
+        this._handleGetData(url, selectedType)
     }
 
     _handleOnRemove = () => {
         this.setState({
             addressList: [],
-            disableSelect: false,
-            apiUrl: ''
+            disableSelect: false
         })
     }
 
-    _handleGetData = (url) => {
+    _handleGetData = (url, selectedType) => {
         const { _handleUpdateAddress } = this
-        const { selectedType } = this.state
         if ( !selectedType ) {
             this.setState({ 
                 isToastOpen: true, 
@@ -167,7 +166,6 @@ class Home extends React.PureComponent {
             'Residential',
             'Commercial'
         ]
-        
         if( selectedType && pTypeList.includes(selectedType)){
             url+=`&pType=${selectedType}`
         } else {
@@ -196,7 +194,7 @@ class Home extends React.PureComponent {
         }
     }
 
-    _handleInputChange = (e) =>{
+    _handleInputChange = (e) => {
         this._handleOnRemove()
 
         this.setState({
@@ -229,14 +227,14 @@ class Home extends React.PureComponent {
     }
 
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, disableSelect, dataLoading } = this.state
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, dataLoading } = this.state
         const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
         
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
                     <StyledSelect
-                        disableSelect={ disableSelect }
+                        disableSelect={ false }
                         _handleInputChange = { _handleInputChange }
                         selectOptions={[
                             'Residential',
