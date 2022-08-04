@@ -1,20 +1,22 @@
 import React from 'react'
 import { IconLayer } from '@deck.gl/layers'
-import Map, { useControl, Marker, Source, Layer } from 'react-map-gl'
+import Map, { useControl, Marker, Source, Layer, Popup } from 'react-map-gl'
 import { MAP_API, API } from '../App..config'
 import StyledSnackBar from './common/StyledSnackBar'
 import Autocomplete from './common/AutoComplete'
-import { Box, Typography, LinearProgress } from '@mui/material'
+import { Box, Typography, LinearProgress, Button } from '@mui/material'
 import mapboxgl from 'mapbox-gl'
 import MapboxDraw from "@mapbox/mapbox-gl-draw"
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import markerIcon from '../assets/marker--v1'
+import blueIcon from '../assets/blue-icon'
+import redIcon from '../assets/marker--v1'
 import commercialIcon from '../assets/commercial'
 import educationIcon from '../assets/education'
 import healthcareIcon from '../assets/healthcare'
 import residentialIcon from '../assets/residential'
-
+import { convertSecondsToTime } from '../utils/utils'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
 
@@ -56,7 +58,7 @@ class Home extends React.PureComponent {
         initial_view_state : {
             longitude: 90.39017821904588,
             latitude: 23.719800220780733,
-            zoom: 8,
+            zoom: 10,
             pitch: 0,
             bearing: 0
         },
@@ -71,9 +73,11 @@ class Home extends React.PureComponent {
         dataLoading: false,
         start_address: {},
         end_address: {},
+        route_info: null,
         lineData: null,
         geoJson: null,
-        markerData : {}
+        markerData : {},
+        showPopup : true
     }
 
     componentDidMount(){
@@ -252,6 +256,10 @@ class Home extends React.PureComponent {
                 return educationIcon
             case "Hospital":
                 return healthcareIcon
+            case "start":
+                return blueIcon
+            case "end":
+                return redIcon
             default:
                 return markerIcon
         }
@@ -270,6 +278,7 @@ class Home extends React.PureComponent {
         if( !inputAddress || inputAddress?.length <= 0 ){
             this._removeGeoJson()
             this.setState( preState =>  ({ 
+                route_info: null,
                 selectedAddress: {},
                 addressList: [],
                 markerData: { 
@@ -300,7 +309,10 @@ class Home extends React.PureComponent {
                 start_address: value,
                 markerData: { 
                     ...preState.markerData,
-                    start: value
+                    start: {
+                        ...value,
+                        addressPointType: 'start'
+                    }
                 },
                 initial_view_state: {
                     ...preState.initial_view_state,
@@ -328,6 +340,7 @@ class Home extends React.PureComponent {
         if( !inputAddress || inputAddress?.length <= 0 ){
             this._removeGeoJson()
             this.setState( preState =>  ({ 
+                route_info: null,
                 selectedAddress: {},
                 addressList: [],
                 markerData: { 
@@ -358,7 +371,10 @@ class Home extends React.PureComponent {
                 end_address: value,
                 markerData: { 
                     ...preState.markerData,
-                    end: value
+                    end: {
+                        ...value,
+                        addressPointType: 'end'
+                    }
                 },
                 initial_view_state: {
                     ...preState.initial_view_state,
@@ -370,7 +386,6 @@ class Home extends React.PureComponent {
     }
 
     // handle get line
-
     _hangleGetLine = (start, end) => {
         const reqBody = {
             "points": [
@@ -415,14 +430,35 @@ class Home extends React.PureComponent {
         })
         .then(res => res.json())
         .then(res => {
+            this.setState({
+                route_info: res
+            })
             const line = res?.paths[0]?.points ?? null
             this._renderGeoJson(line)
         })
     }
     
+    //handle popup open and close
+    _handleShowPopup = (value) => {
+        this.setState({ showPopup: value })
+    }
+
+    // set the starting point of route line
+    _handleSetStartPoint = (a, b, c) => {
+        console.log({ a, b, c})
+    }
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, start_address, end_address, dataLoading, geoJson, markerData } = this.state
-        const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose, _handleStartAutoCompChangeInputChange, _handleStartAutoCompChange, _handleEndAutoCompChangeInputChange, _handleEndAutoCompChange } = this
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, start_address, end_address, dataLoading, geoJson, markerData, showPopup, route_info } = this.state
+        const { _getIconUrl, 
+                _handleToastClose, 
+                _handleStartAutoCompChangeInputChange, 
+                _handleStartAutoCompChange, 
+                _handleEndAutoCompChangeInputChange, 
+                _handleEndAutoCompChange, 
+                _handleShowPopup,
+                _handleSetStartPoint
+        } = this
+        console.log({ route_info })
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
@@ -438,6 +474,13 @@ class Home extends React.PureComponent {
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }
                     />
+                    { route_info && 
+                        <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
+                           <Typography variant='h6' sx={{ textAlign: 'center', p: 1, fontWeight: 600 }}>Informations</Typography> 
+                           <Typography><span style={{ fontWeight: 600}}>Distance: </span> { route_info?.paths[0].distance ? `${(route_info?.paths[0].distance/1000).toFixed(2)}km` : '' }</Typography> 
+                           <Typography><span style={{ fontWeight: 600}}>Duration: </span> { route_info?.paths[0]?.time ? convertSecondsToTime(route_info?.paths[0]?.time/1000) : '' }</Typography> 
+                        </Box>
+                    }
                 </div>
                 <div 
                     style={{
@@ -457,7 +500,25 @@ class Home extends React.PureComponent {
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
                         mapStyle = { MAP_API.STYLES[1].uri }
                     >
-                         <Source id="route" type="geojson" data={ geoJson }>
+                        { showPopup && (
+                            <Popup longitude={ initial_view_state.longitude } latitude={ initial_view_state.latitude }
+                                anchor="bottom"
+                                onClose={() => _handleShowPopup(false)}
+                            >
+                                <Box 
+                                    sx={{ 
+                                        display: 'flex',
+                                        flexDirection: 'column'
+                                    }}
+                                >
+                                    You are here
+                                    <Button variant="text" size={ 'small' } onClick={ _handleSetStartPoint }>
+                                        <Typography sx={{ fontSize: '.7rem'}}>Text</Typography>
+                                    </Button>
+                                </Box>
+                            </Popup>
+                        )}
+                        <Source id="route" type="geojson" data={ geoJson }>
                             <Layer {...layerStyle} />
                         </Source>
                         
@@ -470,9 +531,9 @@ class Home extends React.PureComponent {
                                 scale={1}
                             >
                                 <img 
-                                    src={_getIconUrl(this.state.selectedType)} 
-                                    style={{height:'40px', width:'40px'}}
-                                    alt={`${this.state.selectedType}marker`}
+                                    src={ _getIconUrl( d['addressPointType'] ) } 
+                                    style={ {height:'40px', width:'40px'} }
+                                    alt={ `${this.state.selectedType}marker` }
                                 /> 
                             </Marker>
                         ) }
