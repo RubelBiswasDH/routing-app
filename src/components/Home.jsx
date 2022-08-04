@@ -1,12 +1,10 @@
 import React from 'react'
-import { IconLayer } from '@deck.gl/layers'
-import Map, { useControl, Marker, Source, Layer, Popup } from 'react-map-gl'
+import Map, { Marker, Source, Layer, Popup } from 'react-map-gl'
 import { MAP_API, API } from '../App..config'
 import StyledSnackBar from './common/StyledSnackBar'
 import Autocomplete from './common/AutoComplete'
 import { Box, Typography, LinearProgress, Button } from '@mui/material'
 import mapboxgl from 'mapbox-gl'
-import MapboxDraw from "@mapbox/mapbox-gl-draw"
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import markerIcon from '../assets/marker--v1'
@@ -20,9 +18,6 @@ import { convertSecondsToTime } from '../utils/utils'
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
 
-const ICON_MAPPING = {
-  marker: {x: 0, y: 0, width: 128, height: 128, mask: true}
-};
 const layerStyle = {
     'id': 'route',
     'type': 'line',
@@ -35,22 +30,6 @@ const layerStyle = {
         'line-color': '#ff0000',
         'line-width': 5
     }
-}
-
-function DrawControl(props) {
-  useControl(
-    (map) => {
-        map.map.on('draw.create', props.onCreate)
-        map.map.on('draw.update', props.onUpdate)
-        map.map.on('draw.delete', props.onDelete)
-        return new MapboxDraw(props)
-    },
-    {
-        position: props.position
-    }
-  );
-
-  return null
 }
 
 class Home extends React.PureComponent {
@@ -81,12 +60,8 @@ class Home extends React.PureComponent {
         popup_lngLat: null
     }
 
-    componentDidMount(){
-        this._createLayer()
-    }
-
     componentDidUpdate(prevProps, prevState){
-        const { selectedAddress, selectedType, apiUrl, start_address, end_address, lineData } = this.state
+        const { start_address, end_address } = this.state
 
         if (
             ( 
@@ -124,125 +99,8 @@ class Home extends React.PureComponent {
         this._renderGeoJson(null)
     }
 
-    _getPointColor(value){
-        let color = [255, 140, 0]
-        switch(value) {
-            case "Chawk Bazar":
-                color = [ 220,20,60 ]
-                break
-            case 'Lalbagh':
-                color = [ 123, 104, 238 ]
-                break
-            case "Kotwali":
-                color = [ 123, 120, 238 ]
-                break
-            default:
-                color = [255, 140, 0]
-        }
-        return color
-    }
-
-    _createLayer(){
-        const { selectedAddress } = this.state
-        const layers = [
-            new IconLayer({
-                id: 'icon-layer',
-                data: [ selectedAddress ],
-                pickable: true,
-                // iconAtlas and iconMapping are required
-                // getIcon: return a string
-                iconAtlas: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/icon-atlas.png',
-                iconMapping: ICON_MAPPING,
-                getIcon: d => 'marker',
-            
-                sizeScale: 15,
-                getPosition: d => ([ d?.longitude, d?.latitude]),
-                getSize: d => 5,
-                getColor: d => [Math.sqrt(d.exits), 140, 0]
-            })
-        ]
-        this.setState({layers})
-    }
-
     _handleUpdateAddress = (addressList) => {
         this.setState({ addressList: addressList })
-    }
-
-    _handleOnCreate = ({features}) => {
-        const { selectedType } = this.state
-        const coordinates = features[0]?.geometry?.coordinates[0]
-        let areaQueryStr = ''
-        let count = 0
-
-        for(let i of coordinates){
-            count+=1
-            areaQueryStr+= `${i[0]}%20${i[1]}`
-            if(count !== coordinates.length){
-                areaQueryStr+=','
-            }
-        }
-
-        let url = `${API.GET_DATA}?area=${areaQueryStr}`
-        this.setState({apiUrl:url})
-        this.setState({ disableSelect: true })
-        this._handleGetData(url, selectedType)
-    }
-
-    _handleOnRemove = () => {
-        this.setState({
-            addressList: [],
-            disableSelect: false
-        })
-    }
-
-    _handleGetData = (url, selectedType) => {
-        const { _handleUpdateAddress } = this
-        if ( !selectedType ) {
-            this.setState({ 
-                isToastOpen: true, 
-                toastMessage: 'Please select a type from dropdown before selecting area!'
-            })
-            return
-        }
-        this.setState({ dataLoading: true })
-        const pTypeList = [
-            'Residential',
-            'Commercial'
-        ]
-        if( selectedType && pTypeList.includes(selectedType)){
-            url+=`&pType=${selectedType}`
-        } else {
-            url+=`&subType=${selectedType}`
-        }
-
-        if(url && url.length){
-            fetch(url)
-            .then( res => res.json())
-            .then( res => res.places )
-            .then( res =>  {
-                if(res?.length){
-                    _handleUpdateAddress(res)
-                } else {
-                    this.setState({ 
-                        isToastOpen: true, 
-                        toastMessage: 'No data found for selected input !'
-                    })
-                }
-                this.setState({ dataLoading: false })
-            })
-            .catch( err => {
-                console.err(err)
-                this.setState({ dataLoading: true })
-            })
-        }
-    }
-
-    _handleInputChange = (e) => {
-        this._handleOnRemove()
-
-        this.setState({
-            selectedType: e.target.value
-        })
     }
 
     _getIconUrl = (type) => {
@@ -273,6 +131,7 @@ class Home extends React.PureComponent {
         })
     }
 
+    // get list of address for starting point selection
     _handleStartAutoCompChangeInputChange = e => {
 
         const inputAddress = e?.target?.value
@@ -303,7 +162,7 @@ class Home extends React.PureComponent {
         }
     }
 
-    // handle start point
+    // set start point
     _handleStartAutoCompChange = (e, value) => {
         if( value && Object.keys(value).length){
             this.setState( preState => ({ 
@@ -324,6 +183,7 @@ class Home extends React.PureComponent {
         }
     }
 
+    // fetch address list from autocomplete api
     _handleAddressList = (value) => {
         const autocompleteUrl = `${API.AUTOCOMPLETE}${value}`
         if (value && value.length){
@@ -336,6 +196,7 @@ class Home extends React.PureComponent {
         }
     }
 
+    // get list of address for ending point selection
     _handleEndAutoCompChangeInputChange = e => {
         const inputAddress = e?.target?.value
         if( !inputAddress || inputAddress?.length <= 0 ){
@@ -422,12 +283,12 @@ class Home extends React.PureComponent {
             ]
         }
         fetch(API.GET_LINE, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(reqBody)
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(reqBody)
         })
         .then(res => res.json())
         .then(res => {
@@ -499,7 +360,7 @@ class Home extends React.PureComponent {
 
 
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, start_address, end_address, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat } = this.state
+        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat } = this.state
         const { _getIconUrl, 
                 _handleToastClose, 
                 _handleStartAutoCompChangeInputChange, 
@@ -526,7 +387,7 @@ class Home extends React.PureComponent {
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }
                     />
-                    { route_info && 
+                    { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
                         <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
                            <Typography variant='h6' sx={{ textAlign: 'center', p: 1, fontWeight: 600 }}>Informations</Typography> 
                            <Typography><span style={{ fontWeight: 600}}>Distance: </span> { route_info?.paths[0].distance ? `${(route_info?.paths[0].distance/1000).toFixed(2)}km` : '' }</Typography> 
@@ -579,7 +440,7 @@ class Home extends React.PureComponent {
                         
                         {  Object.keys(markerData).filter(d => markerData[d] !== null)?.map( d => markerData[d]).map( d => 
                             <Marker 
-                                key={ d["longitude"]+d['Address'] }
+                                key={ d["longitude"] }
                                 longitude={ d["longitude"] } 
                                 latitude={ d["latitude"] } 
                                 anchor="bottom" 

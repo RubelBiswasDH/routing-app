@@ -6,7 +6,7 @@ import { Box, Grid, Typography, TextField, Autocomplete } from '@mui/material'
 class AutoComplete extends React.PureComponent{
 
     render(){ 
-        const { _handleAutoCompInputChange, _handleAutoCompChange, filterOptions, disableUnderline, variant, title, fieldStyle, sx } = this.props
+        const { _handleAutoCompInputChange, _handleAutoCompChange, filterOptions, variant, title, fieldStyle, sx } = this.props
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
                 <Autocomplete
@@ -43,8 +43,7 @@ class AutoComplete extends React.PureComponent{
                             type='text'
                             placeholder={ title || '' }
                             InputProps={{
-                                ...params.InputProps,
-                                disableUnderline: disableUnderline ?? false,
+                                ...params.InputProps
                             }}
                         />
                     }
