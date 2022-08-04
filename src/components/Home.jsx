@@ -361,16 +361,17 @@ class Home extends React.PureComponent {
 
     render() {
         const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat } = this.state
-        const { _getIconUrl, 
-                _handleToastClose, 
-                _handleStartAutoCompChangeInputChange, 
-                _handleStartAutoCompChange, 
-                _handleEndAutoCompChangeInputChange, 
-                _handleEndAutoCompChange, 
-                _handleClosePopup,
-                _handleSetStartPoint,
-                _handleSetEndPoint,
-                _handleRightClick
+        const { 
+            _getIconUrl, 
+            _handleToastClose, 
+            _handleStartAutoCompChangeInputChange, 
+            _handleStartAutoCompChange, 
+            _handleEndAutoCompChangeInputChange, 
+            _handleEndAutoCompChange, 
+            _handleClosePopup,
+            _handleSetStartPoint,
+            _handleSetEndPoint,
+            _handleRightClick
         } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
