@@ -1,9 +1,9 @@
 import React from 'react'
 import { IconLayer } from '@deck.gl/layers'
-import Map, { useControl, Marker } from 'react-map-gl'
+import Map, { useControl, Marker, Source, Layer } from 'react-map-gl'
 import { MAP_API, API } from '../App..config'
-import StyledSelect from './common/StyledSelect'
 import StyledSnackBar from './common/StyledSnackBar'
+import Autocomplete from './common/AutoComplete'
 import { Box, Typography, LinearProgress } from '@mui/material'
 import mapboxgl from 'mapbox-gl'
 import MapboxDraw from "@mapbox/mapbox-gl-draw"
@@ -21,6 +21,19 @@ mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worke
 const ICON_MAPPING = {
   marker: {x: 0, y: 0, width: 128, height: 128, mask: true}
 };
+const layerStyle = {
+    'id': 'route',
+    'type': 'line',
+    'source': 'route',
+    'layout': {
+        'line-join': 'round',
+        'line-cap': 'round'
+    },
+    'paint': {
+        'line-color': '#ff0000',
+        'line-width': 5
+    }
+}
 
 function DrawControl(props) {
   useControl(
@@ -43,7 +56,7 @@ class Home extends React.PureComponent {
         initial_view_state : {
             longitude: 90.39017821904588,
             latitude: 23.719800220780733,
-            zoom: 16,
+            zoom: 8,
             pitch: 0,
             bearing: 0
         },
@@ -55,7 +68,12 @@ class Home extends React.PureComponent {
         isToastOpen:false,
         toastMessage: '',
         disableSelect: false,
-        dataLoading: false
+        dataLoading: false,
+        start_address: {},
+        end_address: {},
+        lineData: null,
+        geoJson: null,
+        markerData : []
     }
 
     componentDidMount(){
@@ -63,22 +81,42 @@ class Home extends React.PureComponent {
     }
 
     componentDidUpdate(prevProps, prevState){
-        const { selectedAddress, selectedType, apiUrl } = this.state
+        const { selectedAddress, selectedType, apiUrl, start_address, end_address, lineData } = this.state
+
         if (
             ( 
-                selectedType && prevState.selectedType !== selectedType
+                start_address?.geo_location?.length && end_address?.geo_location?.length
             )
             && (
-                apiUrl && apiUrl?.length
-            ) 
+                prevState.start_address?.geo_location !== start_address?.geo_location || prevState?.end_address?.geo_location !== end_address?.geo_location
+            )
         ){  
-            this._handleGetData(apiUrl, selectedType)
+            this._hangleGetLine(start_address?.geo_location, end_address?.geo_location)
             this.setState(preState => ({
                 ...preState.initial_view_state,
-                longitude:selectedAddress.longitude,
-                latitude:selectedAddress.latitude
+                zoom: 8,
+                longitude:start_address?.geo_location?.longitude,
+                latitude:start_address?.geo_location?.latitude
             }))
         }
+    }
+
+    _renderGeoJson = (lineData) => {
+        const geoJson = {
+            type: 'FeatureCollection',
+            features: [
+                {
+                    type: 'Feature', 
+                    geometry: lineData
+                }
+            ]
+          }
+        this.setState({ geoJson: geoJson })
+
+    }
+
+    _removeGeoJson = () => {
+        this._renderGeoJson(null)
     }
 
     _getPointColor(value){
@@ -226,46 +264,156 @@ class Home extends React.PureComponent {
         })
     }
 
+    _handleStartAutoCompChangeInputChange = e => {
+
+        const inputAddress = e?.target?.value
+        if( !inputAddress || inputAddress?.length <= 0 ){
+            this._removeGeoJson()
+            return
+        }
+        if(inputAddress && inputAddress.length){
+            this._handleAddressList(inputAddress)
+        } else {
+            this.setState( { 
+                selectedAddress: {},
+                addressList: []
+            }) 
+        }
+    }
+
+    // handle start point
+    _handleStartAutoCompChange = (e, value) => {
+        if( value && Object.keys(value).length){
+            this.setState( preState => ({ 
+                start_address: value,
+                markerData: [ 
+                    ...preState.markerData,
+                    value
+                ],
+                initial_view_state: {
+                    ...preState.initial_view_state,
+                    latitude: value.latitude,
+                    longitude: value.longitude
+                }
+            })) 
+        }
+    }
+
+    _handleAddressList = (value) => {
+        const autocompleteUrl = `${API.AUTOCOMPLETE}${value}`
+        if (value && value.length){
+            fetch(autocompleteUrl)
+            .then( res => res.json())
+            .then( res => {
+                const addressList =  res.places
+                this.setState({ addressList: addressList })
+            })
+        }
+    }
+
+    _handleEndAutoCompChangeInputChange = e => {
+        const inputAddress = e?.target?.value
+        if( !inputAddress || inputAddress?.length <= 0 ){
+            this._removeGeoJson()
+            return
+        }
+        if(inputAddress && inputAddress.length){
+            this._handleAddressList(inputAddress)
+        } else {
+            this.setState( { 
+                selectedAddress: {},
+                addressList: []
+            }) 
+        }
+    }
+
+    // handle end point
+    _handleEndAutoCompChange = (e, value) => {
+        if( value && Object.keys(value).length){
+            this.setState( preState => ({ 
+                end_address: value,
+                markerData: [ 
+                    ...preState.markerData,
+                    value
+                ],
+                initial_view_state: {
+                    ...preState.initial_view_state,
+                    latitude: value.latitude,
+                    longitude: value.longitude
+                }
+            })) 
+        }
+    }
+
+    // handle get line
+
+    _hangleGetLine = (start, end) => {
+        const reqBody = {
+            "points": [
+              [
+               ...start
+              ],
+              [
+               ...end
+              ]
+            ],
+            "points_encoded": false,
+            "elevation": false,
+            "profile": "car",
+            "custom_model": {
+              "speed": [
+                {
+                  "if": "road_class == PRIMARY",
+                  "multiply_by": 0.9
+                },
+                {
+                  "if": "road_class == TERTIARY",
+                  "multiply_by": 0.2
+                }
+              ]
+            },
+            "locale": "en-US",
+            "ch.disable": true,
+            "details": [
+              "road_class",
+              "average_speed",
+              "distance",
+              "time"
+            ]
+        }
+        fetch(API.GET_LINE, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reqBody)
+        })
+        .then(res => res.json())
+        .then(res => {
+            const line = res?.paths[0]?.points ?? null
+            this._renderGeoJson(line)
+        })
+    }
+    
     render() {
-        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, dataLoading } = this.state
-        const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose } = this
-        
+        const { initial_view_state, addressList, selectedAddress, selectedType, isToastOpen, toastMessage, start_address, end_address, dataLoading, geoJson, markerData } = this.state
+        const { _handleOnCreate, _handleOnRemove, _handleInputChange, _getIconUrl, _handleToastClose, _handleStartAutoCompChangeInputChange, _handleStartAutoCompChange, _handleEndAutoCompChangeInputChange, _handleEndAutoCompChange } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
-                    <StyledSelect
-                        disableSelect={ false }
-                        _handleInputChange = { _handleInputChange }
-                        selectOptions={[
-                            'Residential',
-                            'Commercial',
-                            'Kindergarden',
-                            'Hospital',
-                            'School'
-                        ]}
-                        value={ selectedType }
-                        title={'Type'}
+                    <Typography>Start</Typography>
+                    <Autocomplete 
+                        _handleAutoCompInputChange={ _handleStartAutoCompChangeInputChange } 
+                        _handleAutoCompChange={ _handleStartAutoCompChange }
+                        filterOptions={ addressList }
                     />
-                    { this.state.selectedType &&
-                        <Typography
-                            variant='h6'
-                            sx={{ px: 2 }}
-                        >
-                            <span style={{ fontWeight: 600 }}>Total { this.state.selectedType } Count : </span>{ this.state.addressList.length }
-                        </Typography>
-                    }
-                    
-                    { (selectedAddress && Object.keys(selectedAddress).length)?  
-                         <Box 
-                            sx={{ display:'flex', flexDirection:'column',p:2}}
-                         >
-                            <Typography variant='h5'>{ selectedAddress?.Address?.split(',')[0] ?? '' }</Typography>
-                            <Typography ><span style={{fontWeight:600}}>Address:</span> { selectedAddress?.Address ?? '' }</Typography>
-                            <Typography ><span style={{fontWeight:600}}>Country:</span> { selectedAddress?.country ?? '' }</Typography>
-                            <Typography ><span style={{fontWeight:600}}>Post Code:</span>  { selectedAddress?.postcode ?? '' }</Typography>
-                        </Box>
-                        :''
-                    }
+                    <Typography>End</Typography>
+                    <Autocomplete 
+                        _handleAutoCompInputChange={ _handleEndAutoCompChangeInputChange } 
+                        _handleAutoCompChange={ _handleEndAutoCompChange }
+                        filterOptions={ addressList }
+                    />
                 </div>
                 <div 
                     style={{
@@ -285,19 +433,11 @@ class Home extends React.PureComponent {
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
                         mapStyle = { MAP_API.STYLES[1].uri }
                     >
-                        <DrawControl
-                            onCreate = { _handleOnCreate }
-                            onDelete = { _handleOnRemove }
-                            onUpdate = { _handleOnCreate }
-                            position="top-left"
-                            displayControlsDefault={false}
-                            controls={{
-                                polygon: true,
-                                trash: true
-                            }}
-                        />
+                         <Source id="route" type="geojson" data={ geoJson }>
+                            <Layer {...layerStyle} />
+                        </Source>
                         
-                        {  addressList?.map( d => 
+                        {  markerData?.map( d => 
                             <Marker 
                                 key={ d["longitude"]+d['Address'] }
                                 longitude={ d["longitude"] } 

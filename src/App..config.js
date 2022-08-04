@@ -26,7 +26,10 @@ const baseUrl = 'https://api.bmapsbd.com'
 // const baseUrl = 'http://bkoih3.ml:9000'
 
 const API = {
-    AUTOCOMPLETE: `http://elastic.bmapsbd.com/obd/search/hotels/test?q`,
-    GET_DATA:`${baseUrl}/get/custom/polygon`
+    // AUTOCOMPLETE: `http://elastic.bmapsbd.com/obd/search/hotels/test?q`,
+    AUTOCOMPLETE: 'https://api.bmapsbd.com/search/autocomplete/web?search=',
+    REVERSEGEO: `https://barikoi.xyz/v1/api/search/reverse/Mjg5MTpGMDNaTU1HTjZU/geocode`,
+    GET_DATA: `${baseUrl}/get/custom/polygon`,
+    GET_LINE: `http://retail.bmapsbd.com:9000/route`
 }
 export { MAP_API, API }
