@@ -73,7 +73,7 @@ class Home extends React.PureComponent {
         end_address: {},
         lineData: null,
         geoJson: null,
-        markerData : []
+        markerData : {}
     }
 
     componentDidMount(){
@@ -269,15 +269,27 @@ class Home extends React.PureComponent {
         const inputAddress = e?.target?.value
         if( !inputAddress || inputAddress?.length <= 0 ){
             this._removeGeoJson()
+            this.setState( preState =>  ({ 
+                selectedAddress: {},
+                addressList: [],
+                markerData: { 
+                    ...preState.markerData,
+                    start: null
+                },
+            }))
             return
         }
         if(inputAddress && inputAddress.length){
             this._handleAddressList(inputAddress)
         } else {
-            this.setState( { 
+            this.setState( preState =>  ({ 
                 selectedAddress: {},
-                addressList: []
-            }) 
+                addressList: [],
+                markerData: { 
+                    ...preState.markerData,
+                    start: null
+                },
+            }))  
         }
     }
 
@@ -286,10 +298,10 @@ class Home extends React.PureComponent {
         if( value && Object.keys(value).length){
             this.setState( preState => ({ 
                 start_address: value,
-                markerData: [ 
+                markerData: { 
                     ...preState.markerData,
-                    value
-                ],
+                    start: value
+                },
                 initial_view_state: {
                     ...preState.initial_view_state,
                     latitude: value.latitude,
@@ -315,15 +327,27 @@ class Home extends React.PureComponent {
         const inputAddress = e?.target?.value
         if( !inputAddress || inputAddress?.length <= 0 ){
             this._removeGeoJson()
+            this.setState( preState =>  ({ 
+                selectedAddress: {},
+                addressList: [],
+                markerData: { 
+                    ...preState.markerData,
+                    end: null
+                },
+            })) 
             return
         }
         if(inputAddress && inputAddress.length){
             this._handleAddressList(inputAddress)
         } else {
-            this.setState( { 
+            this.setState( preState =>  ({ 
                 selectedAddress: {},
-                addressList: []
-            }) 
+                addressList: [],
+                markerData: { 
+                    ...preState.markerData,
+                    end: null
+                },
+            })) 
         }
     }
 
@@ -332,10 +356,10 @@ class Home extends React.PureComponent {
         if( value && Object.keys(value).length){
             this.setState( preState => ({ 
                 end_address: value,
-                markerData: [ 
+                markerData: { 
                     ...preState.markerData,
-                    value
-                ],
+                    end: value
+                },
                 initial_view_state: {
                     ...preState.initial_view_state,
                     latitude: value.latitude,
@@ -437,7 +461,7 @@ class Home extends React.PureComponent {
                             <Layer {...layerStyle} />
                         </Source>
                         
-                        {  markerData?.map( d => 
+                        {  Object.keys(markerData).filter(d => markerData[d] !== null)?.map( d => markerData[d]).map( d => 
                             <Marker 
                                 key={ d["longitude"]+d['Address'] }
                                 longitude={ d["longitude"] } 
@@ -465,4 +489,4 @@ class Home extends React.PureComponent {
     }
 }
 
-export default Home;
+export default Home
