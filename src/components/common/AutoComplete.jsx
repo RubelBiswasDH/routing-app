@@ -6,11 +6,12 @@ import { Box, Grid, Typography, TextField, Autocomplete } from '@mui/material'
 class AutoComplete extends React.PureComponent{
 
     render(){ 
-        const { _handleAutoCompInputChange, _handleAutoCompChange, filterOptions, variant, title, fieldStyle, sx } = this.props
+        const { _handleAutoCompInputChange, _handleAutoCompChange, filterOptions, value, variant, title, fieldStyle, sx } = this.props
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
                 <Autocomplete
                     freeSolo
+                    value={ value?.toString() }
                     sx={{ width: '100%', ...fieldStyle }}
                     onChange={ _handleAutoCompChange }
                     onInputChange={ _handleAutoCompInputChange }
@@ -24,11 +25,11 @@ class AutoComplete extends React.PureComponent{
                         if (option && option?.inputValue) {
                             return option.inputValue;
                         }
-                        return option.Address
+                        return option.Address || ""
                     }}
                     renderOption={(props, option) => (
                         <Grid key={option?.Address} container {...props} >
-                            <Grid item xs={12}><Typography sx={{ fontSize: '1em' }}>{option?.Address?.split(',')[0]}</Typography></Grid>
+                            {/* <Grid item xs={12}><Typography sx={{ fontSize: '1em' }}>{option?.Address?.split(',')[0]}</Typography></Grid> */}
                             <Grid item xs={12}><Typography>{`${option?.Address}`}</Typography></Grid>
                         </Grid>
                     )}

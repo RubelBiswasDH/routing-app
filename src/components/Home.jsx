@@ -3,6 +3,7 @@ import Map, { Marker, Source, Layer, Popup } from 'react-map-gl'
 import { MAP_API, API } from '../App..config'
 import StyledSnackBar from './common/StyledSnackBar'
 import Autocomplete from './common/AutoComplete'
+import StyledSlider from './common/StyledSlider'
 import { Box, Typography, LinearProgress, Button } from '@mui/material'
 import mapboxgl from 'mapbox-gl'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
@@ -15,6 +16,8 @@ import educationIcon from '../assets/education'
 import healthcareIcon from '../assets/healthcare'
 import residentialIcon from '../assets/residential'
 import { convertSecondsToTime } from '../utils/utils'
+
+
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
 
@@ -31,7 +34,7 @@ const layerStyle = {
         'line-width': 5
     }
 }
-
+const roadClassList = ["OTHER","MOTORWAY","TRUNK","PRIMARY","SECONDARY","TERTIARY","RESIDENTIAL","UNCLASSIFIED","SERVICE","ROAD","TRACK","BRIDLEWAY","STEPS","CYCLEWAY","PATH","LIVING_STREET","FOOTWAY","PEDESTRIAN","PLATFORM","CORRIDOR"]
 class Home extends React.PureComponent {
     state = {
         initial_view_state : {
@@ -50,6 +53,8 @@ class Home extends React.PureComponent {
         toastMessage: '',
         disableSelect: false,
         dataLoading: false,
+        start_value: '',
+        end_value: '',
         start_address: {},
         end_address: {},
         route_info: null,
@@ -57,15 +62,15 @@ class Home extends React.PureComponent {
         geoJson: null,
         markerData : {},
         showPopup : true,
-        popup_lngLat: null
+        popup_lngLat: null,
+        slider_value: 30
     }
 
     componentDidUpdate(prevProps, prevState){
         const { start_address, end_address } = this.state
-
         if (
             ( 
-                start_address?.geo_location?.length && end_address?.geo_location?.length
+                start_address && end_address && start_address?.geo_location?.length && end_address?.geo_location?.length
             )
             && (
                 prevState.start_address?.geo_location !== start_address?.geo_location || prevState?.end_address?.geo_location !== end_address?.geo_location
@@ -142,8 +147,7 @@ class Home extends React.PureComponent {
                 selectedAddress: {},
                 addressList: [],
                 markerData: { 
-                    ...preState.markerData,
-                    start: null
+                    ...preState.markerData
                 },
             }))
             return
@@ -180,6 +184,16 @@ class Home extends React.PureComponent {
                     longitude: value.longitude
                 }
             })) 
+        } else {
+            this.setState( preState => ({ 
+                route_info: null,
+                markerData: { 
+                    ...preState.markerData,
+                    start: null,
+                },
+                start_address: null
+            })) 
+            this._renderGeoJson(null)
         }
     }
 
@@ -206,8 +220,7 @@ class Home extends React.PureComponent {
                 selectedAddress: {},
                 addressList: [],
                 markerData: { 
-                    ...preState.markerData,
-                    end: null
+                    ...preState.markerData
                 },
             })) 
             return
@@ -244,6 +257,16 @@ class Home extends React.PureComponent {
                     longitude: value.longitude
                 }
             })) 
+        } else {
+            this.setState( preState => ({ 
+                route_info: null,
+                markerData: { 
+                    ...preState.markerData,
+                    end: null
+                },
+                end_address: null
+            })) 
+            this._renderGeoJson(null)
         }
     }
 
@@ -310,8 +333,10 @@ class Home extends React.PureComponent {
 
     // set the starting point of route line
     _handleSetStartPoint = (lngLat) => {
+
         this.setState( preState => ({
-            showPopup: false, 
+            showPopup: false,
+            start_value: lngLat.lng,
             start_address: {
                 geo_location: [ lngLat.lng, lngLat.lat ],
                 longitude: lngLat.lng,
@@ -347,7 +372,8 @@ class Home extends React.PureComponent {
                     },
                     addressPointType: 'end'
                 }
-            }
+            },
+            end_value: lngLat.lng
         }))
     }
 
@@ -358,9 +384,37 @@ class Home extends React.PureComponent {
         })
     }
 
+    // Set the value of starting address input
+    _handleSetStartValue = (value) => {
+        this.setState({ start_value: value })
+    }
+
+    // Set the value of ending address input
+     _handleSetEndValue = (value) => {
+        this.setState({ end_value: value })
+    }
+
+    _handleSliderChange = (event, newValue) => {
+      this.setState({
+        slider_value: newValue
+      })
+    }
+  
+    _handleSliderInputChange = (event) => {
+        this.setState({slider_value: event.target.value === '' ? '' : Number(event.target.value)})
+    }
+  
+    _handleBlur = () => {
+        const { slider_value } = this.state
+        if (slider_value < 0) {
+            this.setState({slider_value: 0})
+        } else if (slider_value > 100) {
+            this.setState({slider_value: 100})
+        }
+    }
 
     render() {
-        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat } = this.state
+        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat, start_value, end_value } = this.state
         const { 
             _getIconUrl, 
             _handleToastClose, 
@@ -378,15 +432,23 @@ class Home extends React.PureComponent {
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
                     <Typography>Start</Typography>
                     <Autocomplete 
+                        value={ start_value }
                         _handleAutoCompInputChange={ _handleStartAutoCompChangeInputChange } 
                         _handleAutoCompChange={ _handleStartAutoCompChange }
                         filterOptions={ addressList }
                     />
                     <Typography>End</Typography>
                     <Autocomplete 
+                        value={ end_value }
                         _handleAutoCompInputChange={ _handleEndAutoCompChangeInputChange } 
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }
+                    />
+                    <StyledSlider 
+                        value={ this.state.slider_value }
+                        handleSliderChange={ this._handleSliderChange }
+                        handleInputChange={ this._handleSliderInputChange }
+                        handleBlur={ this._handleBlur }
                     />
                     { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
                         <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
