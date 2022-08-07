@@ -4,6 +4,7 @@ import { MAP_API, API } from '../App..config'
 import StyledSnackBar from './common/StyledSnackBar'
 import Autocomplete from './common/AutoComplete'
 import StyledSlider from './common/StyledSlider'
+import StyledSelect from './common/StyledSelect'
 import { Box, Typography, LinearProgress, Button } from '@mui/material'
 import mapboxgl from 'mapbox-gl'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
@@ -34,7 +35,30 @@ const layerStyle = {
         'line-width': 5
     }
 }
-const roadClassList = ["OTHER","MOTORWAY","TRUNK","PRIMARY","SECONDARY","TERTIARY","RESIDENTIAL","UNCLASSIFIED","SERVICE","ROAD","TRACK","BRIDLEWAY","STEPS","CYCLEWAY","PATH","LIVING_STREET","FOOTWAY","PEDESTRIAN","PLATFORM","CORRIDOR"]
+
+const roadClassList = [
+    "OTHER",
+    "MOTORWAY",
+    "TRUNK",
+    "PRIMARY",
+    "SECONDARY",
+    "TERTIARY",
+    "RESIDENTIAL",
+    "UNCLASSIFIED",
+    "SERVICE",
+    "ROAD",
+    "TRACK",
+    "BRIDLEWAY",
+    "STEPS",
+    "CYCLEWAY",
+    "PATH",
+    "LIVING_STREET",
+    "FOOTWAY",
+    "PEDESTRIAN",
+    "PLATFORM",
+    "CORRIDOR"
+]
+
 class Home extends React.PureComponent {
     state = {
         initial_view_state : {
@@ -63,7 +87,8 @@ class Home extends React.PureComponent {
         markerData : {},
         showPopup : true,
         popup_lngLat: null,
-        slider_value: 30
+        slider_value: .6,
+        road_class: ''
     }
 
     componentDidUpdate(prevProps, prevState){
@@ -76,7 +101,7 @@ class Home extends React.PureComponent {
                 prevState.start_address?.geo_location !== start_address?.geo_location || prevState?.end_address?.geo_location !== end_address?.geo_location
             )
         ){  
-            this._hangleGetLine(start_address?.geo_location, end_address?.geo_location)
+            // this._handleGetLine(start_address?.geo_location, end_address?.geo_location)
             this.setState(preState => ({
                 ...preState.initial_view_state,
                 zoom: 8,
@@ -271,14 +296,18 @@ class Home extends React.PureComponent {
     }
 
     // handle get line
-    _hangleGetLine = (start, end) => {
+    _handleGetLine = (start, end) => {
+        const { slider_value, road_class, start_address, end_address } = this.state
+
         const reqBody = {
             "points": [
               [
-               ...start
+                //    ...start
+                ...start_address?.geo_location
               ],
               [
-               ...end
+                //    ...end,
+                ...end_address?.geo_location
               ]
             ],
             "points_encoded": false,
@@ -287,12 +316,12 @@ class Home extends React.PureComponent {
             "custom_model": {
               "speed": [
                 {
-                  "if": "road_class == PRIMARY",
-                  "multiply_by": 0.9
+                  "if": `road_class == ${ road_class ? road_class : 'PRIMARY' }`,
+                  "multiply_by": slider_value ? slider_value : 0.9
                 },
                 {
-                  "if": "road_class == TERTIARY",
-                  "multiply_by": 0.2
+                  "if": `road_class == ${ road_class ? road_class : 'TERTIARY' }`,
+                  "multiply_by": slider_value ? slider_value : 0.2
                 }
               ]
             },
@@ -408,9 +437,14 @@ class Home extends React.PureComponent {
         const { slider_value } = this.state
         if (slider_value < 0) {
             this.setState({slider_value: 0})
-        } else if (slider_value > 100) {
-            this.setState({slider_value: 100})
+        } else if (slider_value > 1) {
+            this.setState({slider_value: 1})
         }
+    }
+
+    // Handle road class selection
+    _handleRoadClassSelect = (e) => {
+        this.setState({road_class: e.target.value})
     }
 
     render() {
@@ -444,12 +478,22 @@ class Home extends React.PureComponent {
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }
                     />
+                    <Typography>Road Class</Typography>
+                    <StyledSelect
+                        value={this.state.road_class}
+                        handleInputChange={ this._handleRoadClassSelect}
+                        selectOptions={roadClassList}
+                    />
                     <StyledSlider 
                         value={ this.state.slider_value }
+                        min={ 0.0 }
+                        max={ 1.0 }
+                        step={ .05 }
                         handleSliderChange={ this._handleSliderChange }
                         handleInputChange={ this._handleSliderInputChange }
                         handleBlur={ this._handleBlur }
                     />
+                    <Button onClick={ this._handleGetLine } variant="outlined">Get Route</Button>
                     { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
                         <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
                            <Typography variant='h6' sx={{ textAlign: 'center', p: 1, fontWeight: 600 }}>Informations</Typography> 

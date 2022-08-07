@@ -13,31 +13,40 @@ const Input = styled(MuiInput)`
 class StyledSlider extends React.PureComponent{
 
   render(){
-    const { handleSliderChange, handleInputChange, handleBlur, value } = this.props
+    const { handleSliderChange, handleInputChange, handleBlur, value, min, max, step } = this.props
     return (
         <Box sx={{ width: '100%' }}>
           <Typography id="input-slider" gutterBottom>
             Speed
           </Typography>
-          <Grid container spacing={1} alignItems="center">
-            <Grid item xs>
+          <Grid container spacing={2} alignItems="center">
+            <Grid xs={8} md={10} item>
               <Slider
                 value={typeof value === 'number' ? value : 0}
                 onChange={handleSliderChange}
                 aria-labelledby="input-slider"
+                step={step ? step : 1}
+                min={min? min : 0}
+                max={max? max : 10}
               />
             </Grid>
-            <Grid item>
+            <Grid xs={4} md={2} item>
               <Input
+                fullWidth
+                sx={{
+                  width: '100%',
+                  textAlign: 'center'
+                }}
                 value={value}
                 size="small"
                 onChange={handleInputChange}
                 onBlur={handleBlur}
                 inputProps={{
-                  step: 10,
-                  min: 0,
-                  max: 100,
+                  step: step ? step : 1,
+                  min: min? min : 0,
+                  max: max? max : 10,
                   type: 'number',
+                  style: { textAlign: 'center' },
                   'aria-labelledby': 'input-slider',
                 }}
               />
