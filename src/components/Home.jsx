@@ -98,6 +98,16 @@ class Home extends React.PureComponent {
                 road_class:'SECONDARY',
                 multiply_by: .2
             }
+        ],
+        priority_list: [
+            {
+                road_class:'PRIMARY',
+                multiply_by: 1
+            },
+            {
+                road_class:'SECONDARY',
+                multiply_by: 1
+            }
         ]
     }
 
@@ -307,7 +317,7 @@ class Home extends React.PureComponent {
 
     // handle get line
     _handleGetLine = (start, end) => {
-        const { start_address, end_address, speed_list } = this.state
+        const { start_address, end_address, speed_list, priority_list } = this.state
         if( !start_address || !end_address ){
             this.setState({
                 isToastOpen: true,
@@ -318,6 +328,10 @@ class Home extends React.PureComponent {
         const speed = speed_list?.map( s => ({
               "if": `road_class == ${ s.road_class ? s.road_class : 'PRIMARY' }`,
               "multiply_by": s?.multiply_by ? s?.multiply_by : 0.6
+        }))
+        const priority = priority_list?.map( s => ({
+            "if": `road_class == ${ s.road_class ? s.road_class : 'PRIMARY' }`,
+            "multiply_by": s?.multiply_by ? s?.multiply_by : 6
         }))
 
         const reqBody = {
@@ -331,14 +345,9 @@ class Home extends React.PureComponent {
             "custom_model": {
                 "speed": [
                     ...speed
-                    // {
-                    //   "if": `road_class == ${ road_class ? road_class : 'PRIMARY' }`,
-                    //   "multiply_by": slider_value ? slider_value : 0.9
-                    // },
-                    // {
-                    //   "if": `road_class == ${ road_class ? road_class : 'TERTIARY' }`,
-                    //   "multiply_by": slider_value ? slider_value : 0.2
-                    // }
+                ],
+                "priority": [
+                    ...priority
                 ]
             },
             "locale": "en-US",
@@ -467,34 +476,67 @@ class Home extends React.PureComponent {
             this.setState({slider_value: 1})
         }
     }
-
+    
+    _handlePrioritySliderChange = (e, i) => {
+        const { priority_list } = this.state
+        const new_list = priority_list.map( (s, id) => id===i? { ...s, multiply_by: e.target.value }: s)
+        this.setState({
+            priority_list: new_list
+        })
+    }
+  
+    _handlePrioritySliderInputChange = (e, i) => {
+        const { priority_list } = this.state
+        const new_list = priority_list.map( (s, id) => id===i? { ...s, multiply_by: e.target.value === '' ? '' : Number(e.target.value) }: s)
+        this.setState({
+            priority_list: new_list
+        })
+    }
+  
+    _handlePriorityBlur = () => {
+        const { slider_value } = this.state
+        if (slider_value < 0) {
+            this.setState({slider_value: 0})
+        } else if (slider_value > 10) {
+            this.setState({slider_value: 10})
+        }
+    }
     // Handle road class selection
     _handleRoadClassSelect = (e,i) => {
-        const { speed_list } = this.state
-        const new_list = speed_list.map( (s, id) => id===i? {...s, road_class: e.target.value}: s)
+        const { speed_list, priority_list } = this.state
+        const new_speed_list = speed_list.map((s, id) => id===i? {...s, road_class: e.target.value}: s)
+        const new_priority_list = priority_list.map((s, id) => id===i? {...s, road_class: e.target.value}: s)
         this.setState({
-            speed_list: new_list
+            speed_list: new_speed_list,
+            priority_list: new_priority_list
         })
-        // this.setState({road_class: e.target.value})
     }
 
     // Handle add another read class
     _handleAddRoadClass = () => {
-        const { speed_list } = this.state
-        const new_list = [
+        const { speed_list, priority_list } = this.state
+        const new_speed_list = [
             ...speed_list,
             {
                 road_class:'PRIMARY',
                 multiply_by: .6
             }
         ]
+        const new_priority_list = [
+            ...priority_list,
+            {
+                road_class:'PRIMARY',
+                multiply_by: 6
+            }
+        ]
         this.setState({
-            speed_list: new_list
+            speed_list: new_speed_list,
+            priority_list: new_priority_list
         })
     }
 
     render() {
-        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat, start_value, end_value, speed_list } = this.state
+        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat, start_value, end_value, speed_list, priority_list } = this.state
         const { 
             _getIconUrl, 
             _handleToastClose, 
@@ -507,6 +549,7 @@ class Home extends React.PureComponent {
             _handleSetEndPoint,
             _handleRightClick
         } = this
+        console.log(speed_list, priority_list)
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px 10px', gap: 4}}>
@@ -542,6 +585,7 @@ class Home extends React.PureComponent {
                                 selectOptions={roadClassList}
                             />
                             <StyledSlider 
+                                title={ 'Speed' }
                                 value={ speed_list[i]?.multiply_by ?? .5 }
                                 min={ 0.0 }
                                 max={ 1.0 }
@@ -549,6 +593,16 @@ class Home extends React.PureComponent {
                                 handleSliderChange={ (e) => this._handleSliderChange(e,i) }
                                 handleInputChange={ (e) => this._handleSliderInputChange(e,i) }
                                 handleBlur={ this._handleBlur }
+                            />
+                             <StyledSlider 
+                                title={ 'Priority' }
+                                value={ priority_list[i]?.multiply_by ?? .5 }
+                                min={ 0.0 }
+                                max={ 1.0 }
+                                step={ .05 }
+                                handleSliderChange={ (e) => this._handlePrioritySliderChange(e,i) }
+                                handleInputChange={ (e) => this._handlePrioritySliderInputChange(e,i) }
+                                handleBlur={ this._handlePriorityBlur }
                             />
                         </Box>
                         ))

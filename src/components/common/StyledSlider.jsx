@@ -13,11 +13,11 @@ const Input = styled(MuiInput)`
 class StyledSlider extends React.PureComponent{
 
   render(){
-    const { handleSliderChange, handleInputChange, handleBlur, value, min, max, step } = this.props
+    const { handleSliderChange, handleInputChange, handleBlur, value, title, min, max, step } = this.props
     return (
         <Box sx={{ width: '100%' }}>
           <Typography id="input-slider" gutterBottom>
-            Speed
+            {title}
           </Typography>
           <Grid container spacing={2} alignItems="center">
             <Grid xs={8} md={10} item>
