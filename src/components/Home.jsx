@@ -79,8 +79,8 @@ class Home extends React.PureComponent {
         dataLoading: false,
         start_value: '',
         end_value: '',
-        start_address: {},
-        end_address: {},
+        start_address: null,
+        end_address: null,
         route_info: null,
         lineData: null,
         geoJson: null,
@@ -88,7 +88,17 @@ class Home extends React.PureComponent {
         showPopup : true,
         popup_lngLat: null,
         slider_value: .6,
-        road_class: ''
+        road_class: '',
+        speed_list: [
+            {
+                road_class:'PRIMARY',
+                multiply_by: .9
+            },
+            {
+                road_class:'SECONDARY',
+                multiply_by: .2
+            }
+        ]
     }
 
     componentDidUpdate(prevProps, prevState){
@@ -297,33 +307,39 @@ class Home extends React.PureComponent {
 
     // handle get line
     _handleGetLine = (start, end) => {
-        const { slider_value, road_class, start_address, end_address } = this.state
+        const { start_address, end_address, speed_list } = this.state
+        if( !start_address || !end_address ){
+            this.setState({
+                isToastOpen: true,
+                toastMessage: 'Please choose start and end point of route'
+            })
+            return
+        }
+        const speed = speed_list?.map( s => ({
+              "if": `road_class == ${ s.road_class ? s.road_class : 'PRIMARY' }`,
+              "multiply_by": s?.multiply_by ? s?.multiply_by : 0.6
+        }))
 
         const reqBody = {
             "points": [
-              [
-                //    ...start
-                ...start_address?.geo_location
-              ],
-              [
-                //    ...end,
-                ...end_address?.geo_location
-              ]
+              [ ...start_address?.geo_location ],
+              [ ...end_address?.geo_location ]
             ],
             "points_encoded": false,
             "elevation": false,
             "profile": "car",
             "custom_model": {
-              "speed": [
-                {
-                  "if": `road_class == ${ road_class ? road_class : 'PRIMARY' }`,
-                  "multiply_by": slider_value ? slider_value : 0.9
-                },
-                {
-                  "if": `road_class == ${ road_class ? road_class : 'TERTIARY' }`,
-                  "multiply_by": slider_value ? slider_value : 0.2
-                }
-              ]
+                "speed": [
+                    ...speed
+                    // {
+                    //   "if": `road_class == ${ road_class ? road_class : 'PRIMARY' }`,
+                    //   "multiply_by": slider_value ? slider_value : 0.9
+                    // },
+                    // {
+                    //   "if": `road_class == ${ road_class ? road_class : 'TERTIARY' }`,
+                    //   "multiply_by": slider_value ? slider_value : 0.2
+                    // }
+                ]
             },
             "locale": "en-US",
             "ch.disable": true,
@@ -423,14 +439,24 @@ class Home extends React.PureComponent {
         this.setState({ end_value: value })
     }
 
-    _handleSliderChange = (event, newValue) => {
-      this.setState({
-        slider_value: newValue
-      })
+    _handleSliderChange = (e, i) => {
+        const { speed_list } = this.state
+        const new_list = speed_list.map( (s, id) => id===i? { ...s, multiply_by: e.target.value }: s)
+        this.setState({
+            speed_list: new_list
+        })
+    //   this.setState({
+    //     slider_value: newValue
+    //   })
     }
   
-    _handleSliderInputChange = (event) => {
-        this.setState({slider_value: event.target.value === '' ? '' : Number(event.target.value)})
+    _handleSliderInputChange = (e, i) => {
+        const { speed_list } = this.state
+        const new_list = speed_list.map( (s, id) => id===i? { ...s, multiply_by: e.target.value === '' ? '' : Number(e.target.value) }: s)
+        this.setState({
+            speed_list: new_list
+        })
+        // this.setState({slider_value: event.target.value === '' ? '' : Number(event.target.value)})
     }
   
     _handleBlur = () => {
@@ -443,12 +469,32 @@ class Home extends React.PureComponent {
     }
 
     // Handle road class selection
-    _handleRoadClassSelect = (e) => {
-        this.setState({road_class: e.target.value})
+    _handleRoadClassSelect = (e,i) => {
+        const { speed_list } = this.state
+        const new_list = speed_list.map( (s, id) => id===i? {...s, road_class: e.target.value}: s)
+        this.setState({
+            speed_list: new_list
+        })
+        // this.setState({road_class: e.target.value})
+    }
+
+    // Handle add another read class
+    _handleAddRoadClass = () => {
+        const { speed_list } = this.state
+        const new_list = [
+            ...speed_list,
+            {
+                road_class:'PRIMARY',
+                multiply_by: .6
+            }
+        ]
+        this.setState({
+            speed_list: new_list
+        })
     }
 
     render() {
-        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat, start_value, end_value } = this.state
+        const { initial_view_state, addressList, isToastOpen, toastMessage, dataLoading, geoJson, markerData, showPopup, route_info, popup_lngLat, start_value, end_value, speed_list } = this.state
         const { 
             _getIconUrl, 
             _handleToastClose, 
@@ -463,7 +509,7 @@ class Home extends React.PureComponent {
         } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
-                <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px'}}>
+                <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px 10px', gap: 4}}>
                     <Typography>Start</Typography>
                     <Autocomplete 
                         value={ start_value }
@@ -478,21 +524,36 @@ class Home extends React.PureComponent {
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }
                     />
-                    <Typography>Road Class</Typography>
-                    <StyledSelect
-                        value={this.state.road_class}
-                        handleInputChange={ this._handleRoadClassSelect}
-                        selectOptions={roadClassList}
-                    />
-                    <StyledSlider 
-                        value={ this.state.slider_value }
-                        min={ 0.0 }
-                        max={ 1.0 }
-                        step={ .05 }
-                        handleSliderChange={ this._handleSliderChange }
-                        handleInputChange={ this._handleSliderInputChange }
-                        handleBlur={ this._handleBlur }
-                    />
+                    {   
+                        speed_list && speed_list && speed_list?.map( (s, i) => (
+                        <Box 
+                            key={i}
+                            sx={{
+                                boxShadow: 2,
+                                p: 2,
+                                my: 1,
+                                gap: 2
+                            }}
+                        >
+                            <Typography>Road Class</Typography>
+                            <StyledSelect
+                                value={ speed_list[i]?.road_class ?? 'PRIMARY'}
+                                handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
+                                selectOptions={roadClassList}
+                            />
+                            <StyledSlider 
+                                value={ speed_list[i]?.multiply_by ?? .5 }
+                                min={ 0.0 }
+                                max={ 1.0 }
+                                step={ .05 }
+                                handleSliderChange={ (e) => this._handleSliderChange(e,i) }
+                                handleInputChange={ (e) => this._handleSliderInputChange(e,i) }
+                                handleBlur={ this._handleBlur }
+                            />
+                        </Box>
+                        ))
+                    }
+                    <Button onClick={ this._handleAddRoadClass } variant="outlined">Add Road Class/Speed</Button>
                     <Button onClick={ this._handleGetLine } variant="outlined">Get Route</Button>
                     { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
                         <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
