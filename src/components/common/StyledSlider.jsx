@@ -16,7 +16,7 @@ class StyledSlider extends React.PureComponent{
     const { handleSliderChange, handleInputChange, handleBlur, value, title, min, max, step } = this.props
     return (
         <Box sx={{ width: '100%' }}>
-          <Typography id="input-slider" gutterBottom>
+          <Typography sx={{ fontSize: '.8em' }} id="input-slider" gutterBottom>
             {title}
           </Typography>
           <Grid container spacing={2} alignItems="center">

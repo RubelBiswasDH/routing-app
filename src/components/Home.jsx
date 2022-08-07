@@ -60,6 +60,7 @@ const roadClassList = [
 ]
 
 class Home extends React.PureComponent {
+    
     state = {
         initial_view_state : {
             longitude: 90.39017821904588,
@@ -501,6 +502,7 @@ class Home extends React.PureComponent {
             this.setState({slider_value: 10})
         }
     }
+
     // Handle road class selection
     _handleRoadClassSelect = (e,i) => {
         const { speed_list, priority_list } = this.state
@@ -577,7 +579,7 @@ class Home extends React.PureComponent {
                                 gap: 2
                             }}
                         >
-                            <Typography>Road Class</Typography>
+                            <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography>
                             <StyledSelect
                                 value={ speed_list[i]?.road_class ?? 'PRIMARY'}
                                 handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
@@ -606,7 +608,7 @@ class Home extends React.PureComponent {
                         </Box>
                         ))
                     }
-                    <Button onClick={ this._handleAddRoadClass } variant="outlined">Add Road Class/Speed</Button>
+                    <Button onClick={ this._handleAddRoadClass } variant="outlined">Add Road Class/Speed/Priority</Button>
                     <Button onClick={ this._handleGetLine } variant="outlined">Get Route</Button>
                     { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
                         <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>

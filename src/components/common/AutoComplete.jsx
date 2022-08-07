@@ -10,6 +10,7 @@ class AutoComplete extends React.PureComponent{
         return(
             <Box sx={{display:'flex', width:'100%', ...sx}}>
                 <Autocomplete
+                    size={'small'}
                     freeSolo
                     value={ value?.toString() ?? '' }
                     sx={{ width: '100%', ...fieldStyle }}
