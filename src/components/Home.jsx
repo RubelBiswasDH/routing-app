@@ -77,8 +77,8 @@ class Home extends React.PureComponent {
         toastMessage: '',
         disableSelect: false,
         dataLoading: false,
-        start_value: '',
-        end_value: '',
+        start_value: null,
+        end_value: null,
         start_address: null,
         end_address: null,
         route_info: null,
@@ -390,7 +390,7 @@ class Home extends React.PureComponent {
 
         this.setState( preState => ({
             showPopup: false,
-            start_value: lngLat.lng,
+            start_value: [ lngLat.lng, lngLat.lat ],
             start_address: {
                 geo_location: [ lngLat.lng, lngLat.lat ],
                 longitude: lngLat.lng,
@@ -427,7 +427,7 @@ class Home extends React.PureComponent {
                     addressPointType: 'end'
                 }
             },
-            end_value: lngLat.lng
+            end_value: [ lngLat.lng, lngLat.lat ]
         }))
     }
 
@@ -549,20 +549,19 @@ class Home extends React.PureComponent {
             _handleSetEndPoint,
             _handleRightClick
         } = this
-        console.log(speed_list, priority_list)
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px 10px', gap: 4}}>
                     <Typography>Start</Typography>
                     <Autocomplete 
-                        value={ start_value }
+                        value={ start_value?.join(', ') ?? "" }
                         _handleAutoCompInputChange={ _handleStartAutoCompChangeInputChange } 
                         _handleAutoCompChange={ _handleStartAutoCompChange }
                         filterOptions={ addressList }
                     />
                     <Typography>End</Typography>
                     <Autocomplete 
-                        value={ end_value }
+                        value={ end_value?.join(', ') ?? "" }
                         _handleAutoCompInputChange={ _handleEndAutoCompChangeInputChange } 
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }

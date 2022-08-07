@@ -11,7 +11,7 @@ class AutoComplete extends React.PureComponent{
             <Box sx={{display:'flex', width:'100%', ...sx}}>
                 <Autocomplete
                     freeSolo
-                    value={ value?.toString() }
+                    value={ value?.toString() ?? '' }
                     sx={{ width: '100%', ...fieldStyle }}
                     onChange={ _handleAutoCompChange }
                     onInputChange={ _handleAutoCompInputChange }
