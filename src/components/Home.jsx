@@ -137,7 +137,7 @@ class Home extends React.PureComponent {
     }
 
     _renderGeoJson = (lineData) => {
-        const { initial_view_state, mapRef } = this.state
+        const { mapRef } = this.state
         const geoJson = {
             type: 'FeatureCollection',
             features: [
@@ -146,21 +146,17 @@ class Home extends React.PureComponent {
                     geometry: lineData
                 }
             ]
-          }
-        // const bounds = bbox(geoJson)
+        }
         if(lineData){
             const [minLng, minLat, maxLng, maxLat] = bbox(geoJson)
-            console.log({mapRef})
             mapRef.current.fitBounds(
                 [
                     [minLng, minLat],
                     [maxLng, maxLat]
                 ],
-                { padding: 50, duration: 1000 }
+                { padding: 100, duration: 1000 }
               )
         }
-
-        // console.log({bounds})
         this.setState({ 
             geoJson: geoJson
         })
