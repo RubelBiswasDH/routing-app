@@ -6,6 +6,7 @@ import Autocomplete from './common/AutoComplete'
 import StyledSlider from './common/StyledSlider'
 import StyledSelect from './common/StyledSelect'
 import { Box, Typography, LinearProgress, Button } from '@mui/material'
+import { bbox } from '@turf/turf'
 import mapboxgl from 'mapbox-gl'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -65,7 +66,9 @@ class Home extends React.PureComponent {
         initial_view_state : {
             longitude: 90.39017821904588,
             latitude: 23.719800220780733,
-            zoom: 10,
+            // zoom: 10,
+            minZoom: 8,
+            maxZoom: 22,
             pitch: 0,
             bearing: 0
         },
@@ -109,7 +112,8 @@ class Home extends React.PureComponent {
                 road_class:'SECONDARY',
                 multiply_by: 1
             }
-        ]
+        ],
+        mapRef: React.createRef()
     }
 
     componentDidUpdate(prevProps, prevState){
@@ -133,6 +137,7 @@ class Home extends React.PureComponent {
     }
 
     _renderGeoJson = (lineData) => {
+        const { initial_view_state, mapRef } = this.state
         const geoJson = {
             type: 'FeatureCollection',
             features: [
@@ -142,7 +147,23 @@ class Home extends React.PureComponent {
                 }
             ]
           }
-        this.setState({ geoJson: geoJson })
+        // const bounds = bbox(geoJson)
+        if(lineData){
+            const [minLng, minLat, maxLng, maxLat] = bbox(geoJson)
+            console.log({mapRef})
+            mapRef.current.fitBounds(
+                [
+                    [minLng, minLat],
+                    [maxLng, maxLat]
+                ],
+                { padding: 50, duration: 1000 }
+              )
+        }
+
+        // console.log({bounds})
+        this.setState({ 
+            geoJson: geoJson
+        })
 
     }
 
@@ -632,10 +653,11 @@ class Home extends React.PureComponent {
                         </Box>
                     }
                     <Map 
+                        ref={ this.state.mapRef }
                         initialViewState={initial_view_state}
                         mapboxAccessToken={ MAP_API.MAPBOX_ACCESS_TOKEN[0] } 
-                        mapStyle = { MAP_API.STYLES[1].uri }
-                        onContextMenu = { _handleRightClick }
+                        mapStyle={ MAP_API.STYLES[1].uri }
+                        onContextMenu={ _handleRightClick }
                     >
                         { (showPopup && popup_lngLat && Object.keys(popup_lngLat)?.length) && (
                             <Popup longitude={ popup_lngLat.lng } latitude={ popup_lngLat.lat }
