@@ -96,11 +96,11 @@ class Home extends React.PureComponent {
         speed_list: [
             {
                 road_class:'PRIMARY',
-                multiply_by: .9
+                multiply_by: 1
             },
             {
                 road_class:'SECONDARY',
-                multiply_by: .2
+                multiply_by: 1
             }
         ],
         priority_list: [
@@ -120,6 +120,7 @@ class Home extends React.PureComponent {
         const mapRef = React.createRef()
         this.setState({ mapRef: mapRef })
     }
+
     componentDidUpdate(prevProps, prevState){
         const { start_address, end_address } = this.state
         if (
@@ -352,11 +353,11 @@ class Home extends React.PureComponent {
         }
         const speed = speed_list?.map( s => ({
               "if": `road_class == ${ s.road_class ? s.road_class : 'PRIMARY' }`,
-              "multiply_by": s?.multiply_by ? s?.multiply_by : 0.6
+              "multiply_by": s?.multiply_by ? s?.multiply_by : 1
         }))
         const priority = priority_list?.map( s => ({
             "if": `road_class == ${ s.road_class ? s.road_class : 'PRIMARY' }`,
-            "multiply_by": s?.multiply_by ? s?.multiply_by : 6
+            "multiply_by": s?.multiply_by ? s?.multiply_by : 1
         }))
 
         const reqBody = {
@@ -541,14 +542,14 @@ class Home extends React.PureComponent {
             ...speed_list,
             {
                 road_class:'PRIMARY',
-                multiply_by: .6
+                multiply_by: 1
             }
         ]
         const new_priority_list = [
             ...priority_list,
             {
                 road_class:'PRIMARY',
-                multiply_by: 6
+                multiply_by: 1
             }
         ]
         this.setState({
@@ -573,7 +574,7 @@ class Home extends React.PureComponent {
         } = this
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
-                <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px 10px', gap: 4}}>
+                <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px 10px', gap: 4, overflow: 'auto' }}>
                     <Typography>Start</Typography>
                     <Autocomplete 
                         value={ start_value?.join(', ') ?? "" }
@@ -594,12 +595,14 @@ class Home extends React.PureComponent {
                                 sx={{
                                     boxShadow: 2,
                                     p: 2,
-                                    my: 1,
+                                    py: .5,
+                                    my: .5,
                                     gap: 2
                                 }}
                             >
-                                <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography>
+                                {/* <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography> */}
                                 <StyledSelect
+                                    title={ 'Road Class' }
                                     value={ speed_list[i]?.road_class ?? 'PRIMARY'}
                                     handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
                                     selectOptions={roadClassList}
