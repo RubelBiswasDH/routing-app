@@ -67,7 +67,7 @@ class Home extends React.PureComponent {
             longitude: 90.39017821904588,
             latitude: 23.719800220780733,
             // zoom: 10,
-            minZoom: 8,
+            minZoom: 10,
             maxZoom: 22,
             pitch: 0,
             bearing: 0
@@ -113,9 +113,13 @@ class Home extends React.PureComponent {
                 multiply_by: 1
             }
         ],
-        mapRef: React.createRef()
+        mapRef: null
     }
 
+    componentDidMount(){
+        const mapRef = React.createRef()
+        this.setState({ mapRef: mapRef })
+    }
     componentDidUpdate(prevProps, prevState){
         const { start_address, end_address } = this.state
         if (
@@ -154,8 +158,11 @@ class Home extends React.PureComponent {
                     [minLng, minLat],
                     [maxLng, maxLat]
                 ],
-                { padding: 100, duration: 1000 }
-              )
+                { 
+                    padding: 100, 
+                    duration: 1000 
+                }
+            )
         }
         this.setState({ 
             geoJson: geoJson
@@ -472,9 +479,6 @@ class Home extends React.PureComponent {
         this.setState({
             speed_list: new_list
         })
-    //   this.setState({
-    //     slider_value: newValue
-    //   })
     }
   
     _handleSliderInputChange = (e, i) => {
@@ -483,7 +487,6 @@ class Home extends React.PureComponent {
         this.setState({
             speed_list: new_list
         })
-        // this.setState({slider_value: event.target.value === '' ? '' : Number(event.target.value)})
     }
   
     _handleBlur = () => {
@@ -585,44 +588,43 @@ class Home extends React.PureComponent {
                         _handleAutoCompChange={ _handleEndAutoCompChange }
                         filterOptions={ addressList }
                     />
-                    {   
-                        speed_list && speed_list && speed_list?.map( (s, i) => (
-                        <Box 
-                            key={i}
-                            sx={{
-                                boxShadow: 2,
-                                p: 2,
-                                my: 1,
-                                gap: 2
-                            }}
-                        >
-                            <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography>
-                            <StyledSelect
-                                value={ speed_list[i]?.road_class ?? 'PRIMARY'}
-                                handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
-                                selectOptions={roadClassList}
-                            />
-                            <StyledSlider 
-                                title={ 'Speed' }
-                                value={ speed_list[i]?.multiply_by ?? .5 }
-                                min={ 0.0 }
-                                max={ 1.0 }
-                                step={ .05 }
-                                handleSliderChange={ (e) => this._handleSliderChange(e,i) }
-                                handleInputChange={ (e) => this._handleSliderInputChange(e,i) }
-                                handleBlur={ this._handleBlur }
-                            />
-                             <StyledSlider 
-                                title={ 'Priority' }
-                                value={ priority_list[i]?.multiply_by ?? .5 }
-                                min={ 0.0 }
-                                max={ 1.0 }
-                                step={ .05 }
-                                handleSliderChange={ (e) => this._handlePrioritySliderChange(e,i) }
-                                handleInputChange={ (e) => this._handlePrioritySliderInputChange(e,i) }
-                                handleBlur={ this._handlePriorityBlur }
-                            />
-                        </Box>
+                    {   speed_list && speed_list && speed_list?.map( (s, i) => (
+                            <Box 
+                                key={i}
+                                sx={{
+                                    boxShadow: 2,
+                                    p: 2,
+                                    my: 1,
+                                    gap: 2
+                                }}
+                            >
+                                <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography>
+                                <StyledSelect
+                                    value={ speed_list[i]?.road_class ?? 'PRIMARY'}
+                                    handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
+                                    selectOptions={roadClassList}
+                                />
+                                <StyledSlider 
+                                    title={ 'Speed' }
+                                    value={ speed_list[i]?.multiply_by ?? .5 }
+                                    min={ 0.0 }
+                                    max={ 1.0 }
+                                    step={ .05 }
+                                    handleSliderChange={ (e) => this._handleSliderChange(e,i) }
+                                    handleInputChange={ (e) => this._handleSliderInputChange(e,i) }
+                                    handleBlur={ this._handleBlur }
+                                />
+                                <StyledSlider 
+                                    title={ 'Priority' }
+                                    value={ priority_list[i]?.multiply_by ?? .5 }
+                                    min={ 0.0 }
+                                    max={ 1.0 }
+                                    step={ .05 }
+                                    handleSliderChange={ (e) => this._handlePrioritySliderChange(e,i) }
+                                    handleInputChange={ (e) => this._handlePrioritySliderInputChange(e,i) }
+                                    handleBlur={ this._handlePriorityBlur }
+                                />
+                            </Box>
                         ))
                     }
                     <Button onClick={ this._handleAddRoadClass } variant="outlined">Add Road Class/Speed/Priority</Button>
