@@ -66,7 +66,6 @@ class Home extends React.PureComponent {
         initial_view_state : {
             longitude: 90.39017821904588,
             latitude: 23.719800220780733,
-            // zoom: 10,
             minZoom: 10,
             maxZoom: 22,
             pitch: 0,
@@ -385,7 +384,7 @@ class Home extends React.PureComponent {
               "time"
             ]
         }
-        fetch(API.GET_LINE, {
+        fetch(API.GET_ROUTE, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json, text/plain, */*',
@@ -586,14 +585,14 @@ class Home extends React.PureComponent {
         return(
             <div style={{display:'flex',flexDirection:'row', width:'100vw', height:'100vh'}}>
                 <div style={{display:'flex',flexDirection:'column', minWidth:'25%',padding:'4px 10px', gap: 4, overflow: 'auto' }}>
-                    <Typography>Start</Typography>
+                    <Typography sx={{ fontSize: '.7em' }}>Start</Typography>
                     <Autocomplete 
                         value={ start_value?.join(', ') ?? "" }
                         _handleAutoCompInputChange={ _handleStartAutoCompChangeInputChange } 
                         _handleAutoCompChange={ _handleStartAutoCompChange }
                         filterOptions={ addressList }
                     />
-                    <Typography>End</Typography>
+                    <Typography sx={{ fontSize: '.7em' }}>End</Typography>
                     <Autocomplete 
                         value={ end_value?.join(', ') ?? "" }
                         _handleAutoCompInputChange={ _handleEndAutoCompChangeInputChange } 
@@ -611,7 +610,6 @@ class Home extends React.PureComponent {
                                     gap: 2
                                 }}
                             >
-                                {/* <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography> */}
                                 <Grid container sx={{ display: 'flex', alignItems: 'center' }}>
                                     <Grid sm={10} item >
                                         <StyledSelect
@@ -653,8 +651,8 @@ class Home extends React.PureComponent {
                             </Box>
                         ))
                     }
-                    <Button onClick={ this._handleAddCustomProfile } variant="outlined">Add Road Class/Speed/Priority</Button>
-                    <Button onClick={ this._handleGetLine } variant="outlined">Get Route</Button>
+                    <Button onClick={ this._handleAddCustomProfile } variant="outlined"><Typography sx={{ fontSize: '.8em', pt: .5 }}>Add Custom Profile</Typography></Button>
+                    <Button onClick={ this._handleGetLine } variant="outlined"><Typography sx={{ fontSize: '.8em' ,pt: .5 }}>Get Route</Typography></Button>
                 </div>
                 <div 
                     style={{

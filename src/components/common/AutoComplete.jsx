@@ -2,7 +2,6 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Box, Grid, Typography, TextField, Autocomplete } from '@mui/material'
 
-
 class AutoComplete extends React.PureComponent{
 
     render(){ 
@@ -30,7 +29,6 @@ class AutoComplete extends React.PureComponent{
                     }}
                     renderOption={(props, option) => (
                         <Grid key={option?.Address} container {...props} >
-                            {/* <Grid item xs={12}><Typography sx={{ fontSize: '1em' }}>{option?.Address?.split(',')[0]}</Typography></Grid> */}
                             <Grid item xs={12}><Typography>{`${option?.Address}`}</Typography></Grid>
                         </Grid>
                     )}

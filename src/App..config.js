@@ -30,6 +30,6 @@ const API = {
     AUTOCOMPLETE: 'https://api.bmapsbd.com/search/autocomplete/web?search=',
     REVERSEGEO: `https://barikoi.xyz/v1/api/search/reverse/Mjg5MTpGMDNaTU1HTjZU/geocode`,
     GET_DATA: `${baseUrl}/get/custom/polygon`,
-    GET_LINE: `http://retail.bmapsbd.com:9000/route`
+    GET_ROUTE: `https://retail.bmapsbd.com:9000/route`
 }
 export { MAP_API, API }
