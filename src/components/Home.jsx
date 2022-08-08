@@ -489,12 +489,18 @@ class Home extends React.PureComponent {
         })
     }
   
-    _handleBlur = () => {
-        const { slider_value } = this.state
-        if (slider_value < 0) {
-            this.setState({slider_value: 0})
-        } else if (slider_value > 1) {
-            this.setState({slider_value: 1})
+    _handleBlur = (i, min, max) => {
+        const { speed_list } = this.state
+        if(speed_list[i].multiply_by < min){
+            const new_list = speed_list.map( (s, idx) => idx===i? { ...s, multiply_by: min }: s)
+            this.setState({
+                speed_list: new_list
+            })
+        } else if (speed_list[i].multiply_by > max) {
+            const new_list = speed_list.map( (s, idx) => idx===i? { ...s, multiply_by: max }: s)
+            this.setState({
+                speed_list: new_list
+            })
         }
     }
     
@@ -514,12 +520,18 @@ class Home extends React.PureComponent {
         })
     }
   
-    _handlePriorityBlur = () => {
-        const { slider_value } = this.state
-        if (slider_value < 0) {
-            this.setState({slider_value: 0})
-        } else if (slider_value > 10) {
-            this.setState({slider_value: 10})
+    _handlePriorityBlur = (i, min, max) => {
+        const { priority_list } = this.state
+        if(priority_list[i].multiply_by < min){
+            const new_list = priority_list.map( (s, idx) => idx===i? { ...s, multiply_by: min }: s)
+            this.setState({
+                priority_list: new_list
+            })
+        } else if (priority_list[i].multiply_by > max) {
+            const new_list = priority_list.map( (s, idx) => idx===i? { ...s, multiply_by: max }: s)
+            this.setState({
+                priority_list: new_list
+            })
         }
     }
 
@@ -636,7 +648,7 @@ class Home extends React.PureComponent {
                                     step={ .05 }
                                     handleSliderChange={ (e) => this._handleSliderChange(e,i) }
                                     handleInputChange={ (e) => this._handleSliderInputChange(e,i) }
-                                    handleBlur={ this._handleBlur }
+                                    handleBlur={ () => this._handleBlur(i, 0, 1) }
                                 />
                                 <StyledSlider 
                                     title={ 'Priority' }
@@ -646,7 +658,7 @@ class Home extends React.PureComponent {
                                     step={ .05 }
                                     handleSliderChange={ (e) => this._handlePrioritySliderChange(e,i) }
                                     handleInputChange={ (e) => this._handlePrioritySliderInputChange(e,i) }
-                                    handleBlur={ this._handlePriorityBlur }
+                                    handleBlur={ () => this._handlePriorityBlur(i, 0, 1) }
                                 />
                             </Box>
                         ))
