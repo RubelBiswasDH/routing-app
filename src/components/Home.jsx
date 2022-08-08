@@ -398,7 +398,7 @@ class Home extends React.PureComponent {
             this.setState({
                 route_info: res
             })
-            const line = res?.paths[0]?.points ?? null
+            const line = (res?.paths?.length > 0 ) ? res?.paths[0]?.points : null
             this._renderGeoJson(line)
         })
     }
@@ -632,13 +632,6 @@ class Home extends React.PureComponent {
                     }
                     <Button onClick={ this._handleAddRoadClass } variant="outlined">Add Road Class/Speed/Priority</Button>
                     <Button onClick={ this._handleGetLine } variant="outlined">Get Route</Button>
-                    { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
-                        <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
-                           <Typography variant='h6' sx={{ textAlign: 'center', p: 1, fontWeight: 600 }}>Informations</Typography> 
-                           <Typography><span style={{ fontWeight: 600}}>Distance: </span> { route_info?.paths[0].distance ? `${(route_info?.paths[0].distance/1000).toFixed(2)}km` : '' }</Typography> 
-                           <Typography><span style={{ fontWeight: 600}}>Duration: </span> { route_info?.paths[0]?.time ? convertSecondsToTime(route_info?.paths[0]?.time/1000) : '' }</Typography> 
-                        </Box>
-                    }
                 </div>
                 <div 
                     style={{
@@ -707,6 +700,14 @@ class Home extends React.PureComponent {
                     toastSeverity = {'warning'}
                     toastMessage = { toastMessage }
                 />
+                { (route_info && route_info?.paths && route_info?.paths?.length > 0 ) &&
+                    <Box sx={{ position: 'absolute', top: 20, right: 20, p: 1, minHeight: '30px', backgroundColor: 'white', border: '1px solid black' }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', px: 2}}>
+                            <Typography><span style={{ fontWeight: 600}}>Distance: </span> { route_info?.paths[0].distance ? `${(route_info?.paths[0].distance/1000).toFixed(2)}km` : '' }</Typography> 
+                            <Typography><span style={{ fontWeight: 600}}>Duration: </span> { route_info?.paths[0]?.time ? convertSecondsToTime(route_info?.paths[0]?.time/1000) : '' }</Typography> 
+                        </Box>
+                    </Box>
+                }
             </div>
         )
     }
