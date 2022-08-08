@@ -5,7 +5,7 @@ import StyledSnackBar from './common/StyledSnackBar'
 import Autocomplete from './common/AutoComplete'
 import StyledSlider from './common/StyledSlider'
 import StyledSelect from './common/StyledSelect'
-import { Box, Typography, LinearProgress, Button } from '@mui/material'
+import { Box, Grid, Typography, LinearProgress, Button, IconButton } from '@mui/material'
 import { bbox } from '@turf/turf'
 import mapboxgl from 'mapbox-gl'
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css'
@@ -18,7 +18,7 @@ import educationIcon from '../assets/education'
 import healthcareIcon from '../assets/healthcare'
 import residentialIcon from '../assets/residential'
 import { convertSecondsToTime } from '../utils/utils'
-
+import DeleteIcon from '@mui/icons-material/Delete'
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
 mapboxgl.workerClass = require('worker-loader!mapbox-gl/dist/mapbox-gl-csp-worker').default
@@ -535,8 +535,8 @@ class Home extends React.PureComponent {
         })
     }
 
-    // Handle add another read class
-    _handleAddRoadClass = () => {
+    // Handle add another road class
+    _handleAddCustomProfile = () => {
         const { speed_list, priority_list } = this.state
         const new_speed_list = [
             ...speed_list,
@@ -552,6 +552,17 @@ class Home extends React.PureComponent {
                 multiply_by: 1
             }
         ]
+        this.setState({
+            speed_list: new_speed_list,
+            priority_list: new_priority_list
+        })
+    }
+
+    // Handle delete road class/speed/priority item
+    _handleDeleteCustomProfile = (i) => {
+        const { speed_list, priority_list } = this.state
+        const new_speed_list = speed_list.filter((s, idx) => idx !== i)
+        const new_priority_list = priority_list.filter((s, idx) => idx !== i )
         this.setState({
             speed_list: new_speed_list,
             priority_list: new_priority_list
@@ -601,12 +612,24 @@ class Home extends React.PureComponent {
                                 }}
                             >
                                 {/* <Typography sx={{ fontSize: '.8em' }}>Road Class</Typography> */}
-                                <StyledSelect
-                                    title={ 'Road Class' }
-                                    value={ speed_list[i]?.road_class ?? 'PRIMARY'}
-                                    handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
-                                    selectOptions={roadClassList}
-                                />
+                                <Grid container sx={{ display: 'flex', alignItems: 'center' }}>
+                                    <Grid sm={10} item >
+                                        <StyledSelect
+                                            title={ 'Road Class' }
+                                            value={ speed_list[i]?.road_class ?? 'PRIMARY'}
+                                            handleInputChange={ (e) => this._handleRoadClassSelect(e,i)}
+                                            selectOptions={roadClassList}
+                                        />
+                                    </Grid>
+                                    <Grid sm={2} item  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }} >
+                                        <IconButton 
+                                            size='small'
+                                            onClick={ () => this._handleDeleteCustomProfile(i) }
+                                        >
+                                            <DeleteIcon color={'error'} />
+                                        </IconButton>
+                                    </Grid>
+                                </Grid>
                                 <StyledSlider 
                                     title={ 'Speed' }
                                     value={ speed_list[i]?.multiply_by ?? .5 }
@@ -630,7 +653,7 @@ class Home extends React.PureComponent {
                             </Box>
                         ))
                     }
-                    <Button onClick={ this._handleAddRoadClass } variant="outlined">Add Road Class/Speed/Priority</Button>
+                    <Button onClick={ this._handleAddCustomProfile } variant="outlined">Add Road Class/Speed/Priority</Button>
                     <Button onClick={ this._handleGetLine } variant="outlined">Get Route</Button>
                 </div>
                 <div 

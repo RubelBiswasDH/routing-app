@@ -16,4 +16,10 @@ function convertSecondsToTime(seconds) {
       ${sec ? sec + 'sec' : ''}`
   }
 
- export { convertSecondsToTime }
+  // remove an obj item for an "array of object" by key value
+const removeObjFromArray = (arrOfObj, key, value) => {
+  return arrOfObj.filter( a => a[key] !== value )
+}
+
+ export { convertSecondsToTime, removeObjFromArray }
+
